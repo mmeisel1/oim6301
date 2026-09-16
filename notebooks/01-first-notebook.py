@@ -44,9 +44,52 @@ app = marimo.App(width="medium", sql_output="pandas")
 
 @app.cell
 def _():
+
     import marimo as mo
 
     return (mo,)
+
+
+@app.cell
+def _():
+    1 + 3
+    return
+
+
+@app.cell
+def _():
+    print('hello world!')
+    return
+
+
+@app.cell
+def _(freight_charges):
+    print(freight_charges)
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[0]
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[1]
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[2]
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[5]
+    return
 
 
 @app.cell(hide_code=True)
