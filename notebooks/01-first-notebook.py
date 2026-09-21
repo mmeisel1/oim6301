@@ -43,21 +43,37 @@ app = marimo.App(width="medium", sql_output="pandas")
 
 
 @app.cell
-def _(freight_charges):
-    freight_charges[0]
+def _():
+    def _():
+        freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+        return freight_charges[0]
+
+
+    _()
     return
 
 
 @app.cell
-def _(freight_charges):
-    len(freight_charges)
+def _():
+    def _():
+        freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+        return len(freight_charges)
+
+
+    _()
     return
 
 
 @app.cell
-def _(freight_charges):
-    total = sum(freight_charges)
-    return (total,)
+def _():
+    def _():
+        freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+        total = sum(freight_charges)
+        return
+
+
+    _()
+    return
 
 
 @app.cell
@@ -117,7 +133,6 @@ def _():
 @app.cell
 def _(freight_charges):
     freight_charges[-1]
-
     return
 
 
@@ -370,19 +385,6 @@ def _(freight_charges):
 def _():
     max(["9.50", "16.75", "22.25"])
     return
-
-
-@app.cell
-def _():
-    freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
-    return (freight_charges,)
-
-
-@app.cell
-def _():
-    freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
-    freight_charges
-    return (freight_charges,)
 
 
 @app.cell(hide_code=True)
@@ -904,7 +906,6 @@ def _(freight_charges, orders):
     _ax.bar([str(_o) for _o in orders], freight_charges)
     _ax.set_ylabel("freight")
     _fig
-
     return
 
 
