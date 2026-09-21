@@ -43,28 +43,99 @@ app = marimo.App(width="medium", sql_output="pandas")
 
 
 @app.cell
-def _():
-
-    import marimo as mo
-
-    return (mo,)
-
-
-@app.cell
-def _():
-    1 + 3
-    return
-
-
-@app.cell
-def _():
-    print('hello world!')
+def _(freight_charges):
+    freight_charges[0]
     return
 
 
 @app.cell
 def _(freight_charges):
-    print(freight_charges)
+    len(freight_charges)
+    return
+
+
+@app.cell
+def _(freight_charges):
+    total = sum(freight_charges)
+    return (total,)
+
+
+@app.cell
+def _(total):
+    total
+    return
+
+
+@app.cell
+def _(freight_charges):
+    total = sum(freight_charges)
+    return (total,)
+
+
+@app.cell
+def _():
+    "if I change the values of 16.75 to 999.99, then the results for cell 1 changes the answer, and cell 3 "
+    return
+
+
+@app.cell
+def _():
+    "When I delete the charges cell then I get error because my variables no longer exist"
+    return
+
+
+@app.cell
+def _():
+    "When I add a new definition for total I get error because I can't have the same variable again "
+    return
+
+
+@app.cell
+def _():
+    "When dragging the cell that says total it is still running, I think because it's already defined"
+    return
+
+
+@app.cell
+def _():
+    "when I went back to my original version I think I deleted too many things so the text that was there before got lost"
+    return
+
+
+@app.cell
+def _():
+    [
+      10248,
+      10249,
+      10250,
+      10251,
+      10252
+    ]
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[-1]
+
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[:3]
+    return
+
+
+@app.cell
+def _(orders):
+    orders[0]
+    return
+
+
+@app.cell
+def _():
+    "orders and freights in 0 both have in common that it gives you back the first element. The request means we get the item at index 0 and indexing is starting at 0 which is why we get that first number on either orders or freight"
     return
 
 
@@ -75,21 +146,243 @@ def _(freight_charges):
 
 
 @app.cell
-def _(freight_charges):
-    freight_charges[1]
+def _():
+    category = "Confections"
+    return (category,)
+
+
+@app.cell
+def _(category):
+    len(category)
+    return
+
+
+@app.cell
+def _():
+    "it's now counting the characters in the word confections/lenght of the word"
+    return
+
+
+@app.cell
+def _(orders):
+    sum(orders)
+    return
+
+
+@app.cell
+def _():
+    "yes, sum should run and it seems like it did, using total in this case wouldn't work because we had already defined it as the sum of freight charges"
+    return
+
+
+@app.cell
+def _(orders):
+    orders * 2
+    return
+
+
+@app.cell
+def _(freight_charges, orders):
+    orders+ freight_charges
     return
 
 
 @app.cell
 def _(freight_charges):
-    freight_charges[2]
+    sorted(freight_charges)
     return
 
 
 @app.cell
 def _(freight_charges):
-    freight_charges[5]
+    sorted(freight_charges, reverse=True)
     return
+
+
+@app.cell
+def _():
+    "it reversed the order from highest to lowest"
+    return
+
+
+@app.cell
+def _():
+    [
+      "<class 'float'>",
+      "<class 'int'>",
+      "<class 'str'>",
+      "<class 'bool'>"
+    ]
+    return
+
+
+@app.cell
+def _():
+    "16.75" + "22.25"
+    return
+
+
+@app.cell
+def _():
+    16.75 + "22.25"
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[0] > 20
+    return
+
+
+@app.cell
+def _(freight_charges):
+    freight_charges[-1] == max(freight_charges)
+    return
+
+
+@app.cell
+def _(freight_charges):
+    type(freight_charges[0] > 20)
+    return
+
+
+@app.cell
+def _(freight_charges):
+    type(freight_charges[-1] == max(freight_charges))
+    return
+
+
+@app.cell
+def _():
+    "using an f-string with {}"
+    return
+
+
+@app.cell
+def _(freight_charges, total):
+    average = total / len(freight_charges)
+    return (average,)
+
+
+@app.cell
+def _(average, total):
+    print(f"The total freight is {total:.2f} and the average charge is {average:.2f}")
+    return
+
+
+@app.cell
+def _(freight_charges, total):
+    total/len(freight_charges)
+    return
+
+
+@app.cell
+def _():
+    [
+      22.25,
+      25.0,
+      20.25,
+      36.25
+    ]
+    return
+
+
+@app.cell
+def _():
+    over_20 = [22.25,
+      25.0,
+      20.25,
+      36.25]
+    return
+
+
+@app.cell
+def _(freight_charges):
+    def _():
+        over_20 = []
+        for charge in freight_charges:
+            if charge > 20:
+                over_20.append(charge)
+        return over_20
+
+
+    _()
+    return
+
+
+@app.cell
+def _(freight_charges):
+    def _():
+        under_25 = []
+        for charge in freight_charges:
+            if charge < 25:
+                under_25.append(charge)
+        return under_25
+
+
+    _()
+    return
+
+
+@app.cell
+def _(freight_charges):
+    def _():
+        total = sum(freight_charges)
+        average = total / len(freight_charges)
+        return print(f"The total freight is ${total:.2f} and the average charge is ${average:.2f}")
+
+
+    _()
+    return
+
+
+@app.cell
+def _(freight_charges):
+    def _():
+        under_25 = []
+        for charge in freight_charges:
+            if charge < 25:
+                under_25.append(charge)
+        return print(f"There are {len(under_25)} charges below 25, and they add up to {sum(under_25):.2f}")
+
+
+    _()
+    return
+
+
+@app.cell
+def _(freight_charges):
+    def _():
+        def _():
+            under_25 = []
+            for charge in freight_charges:
+                if charge <= 25:
+                    under_25.append(charge)
+            return under_25
+        return _()
+
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    max(["9.50", "16.75", "22.25"])
+    return
+
+
+@app.cell
+def _():
+    freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+    return (freight_charges,)
+
+
+@app.cell
+def _():
+    freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+    freight_charges
+    return (freight_charges,)
 
 
 @app.cell(hide_code=True)
@@ -188,6 +481,17 @@ def _(mo):
     typing inside one cell. Use the **undo** button at the bottom right, which stays
     there until you close the notebook, or `Ctrl+K` and search for undo.*
     """)
+    return
+
+
+@app.cell
+def _():
+    def _():
+        freight_charges = [16.75, 22.25, 25.00, 20.25, 36.25]
+        return freight_charges
+
+
+    _()
     return
 
 
@@ -378,18 +682,6 @@ def _(freight_charges):
         if charge > 20:
             over_20.append(charge)
     over_20
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    `for` takes each charge in the list in turn and runs the indented lines once for it. `if` runs its indented line only when its condition is `True`, and `.append()` adds that charge to the end of `over_20`, which started empty.
-
-    The indent is part of the code. Leave it out and Python stops with an `IndentationError`.
-
-    📖 Handbook: Python §4 Conditionals, §12 Iterating over a list with `for`, §13 Filtering and the accumulator
-    """)
     return
 
 
@@ -594,6 +886,30 @@ def _(mo):
     > - Answer a second question that needs something not covered yet, such as which month changed most from the one before, and explain the agent's line in your own words
     > - Send the notebook to somebody outside this course and write down the question they asked
     """)
+    return
+
+
+@app.cell
+def _():
+    "i would change the word pending and swap it for a number so it can run properly"
+    "once i make the change on row 1 then row 3 and 4 should return correct answers if its a number instead of a string with a word"
+    return
+
+
+@app.cell
+def _(freight_charges, orders):
+    import matplotlib.pyplot as plt
+
+    _fig, _ax = plt.subplots(figsize=(6, 2.6))
+    _ax.bar([str(_o) for _o in orders], freight_charges)
+    _ax.set_ylabel("freight")
+    _fig
+
+    return
+
+
+@app.cell
+def _():
     return
 
 

@@ -5,5 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "marimo>=0.24.2",
+    "marimo[recommended]>=0.24.2",
+    "matplotlib>=3.11.2",
 ]
+
+[tool.uv]
+# cryptography 50.0.1 has no prebuilt wheel for Intel macOS + Python 3.14, forcing a Rust/OpenSSL source build.
+# 42.0.8 ships a prebuilt abi3 wheel (macosx_10_12_x86_64) that works across Python versions, so pin to it.
+override-dependencies = ["cryptography==42.0.8"]
