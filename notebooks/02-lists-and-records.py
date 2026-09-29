@@ -83,6 +83,19 @@ def _():
 
 
 @app.cell
+def _(charges):
+    total = sum(charges)
+    print(charges)
+    return
+
+
+@app.cell
+def _(total_charge):
+    print(total_charge)
+    return
+
+
+@app.cell
 def _(cost, tax):
     total_cost = float(cost) + float(tax)
     print(total_cost)
@@ -92,7 +105,6 @@ def _(cost, tax):
 @app.cell
 def _(cost):
     cost * 2
-
     return
 
 
@@ -134,7 +146,7 @@ def _():
     for freight_charges in freight_charges:
         step = step + 1
         print(f"--- Pass {step} ---")
-    
+
     return (freight_charges,)
 
 
@@ -275,6 +287,28 @@ def _(mo):
 def _():
     charges = [16.75, 22.25, 25.00, 20.25, 36.25]
     charges
+    return (charges,)
+
+
+@app.cell
+def _(charges):
+    charges[0]
+    charges[-1]
+    charges[5]
+    return
+
+
+@app.cell
+def _(charges):
+    def _():
+        total = 0
+        for charge in charges:
+            if charge < 25:
+                total = total + charge
+        return total
+
+
+    _()
     return
 
 
@@ -318,13 +352,13 @@ def _(mo):
     it, write under the letter, and press `Ctrl+Enter`. Code still goes in cells of your
     own, added with the **+** button.
 
-    **A ·**
+    **A ·** > When a score passes more than one test, only the first true test in an `if`/`elif`/`else` chain prints, because Python stops checking once it finds a match, whereas separate `if` statements are each checked on their own, which is why the original cell printed both `Pass` and `A` for 95.
 
-    **C ·**
+    **C ·** First it was only counting 3 items not 4 and then when I created a new cell with extend and kept append, for a quick second I got 5 and then 7 (I re run it). It kept adding the same list again which is why I then removed append and just kept extend and actually got back the right result which was 4
 
-    **D ·**
+    **D ·** tickers.sort() printed none because it's a method that belongs to a value and this list doesn't have any value whilst sorted(tickers) gave me back a new sorted list becasue its a function
 
-    **E ·**
+    **E ·**You'd want two names for the same list when a change made through one name should also show up through the other.
     """)
     return
 
@@ -353,11 +387,16 @@ def _(mo):
 
 @app.cell
 def _():
-    score = 95
-    if score >= 60:
-        print("Pass")
-    elif score >= 90:
-        print("A")
+    def _():
+        score = 90
+        if score >= 90:
+            print("A")
+        elif score >= 60:
+            print("Pass")
+        else:
+            print("Fail")
+
+    _()
     return
 
 
@@ -384,7 +423,34 @@ def _(mo):
 @app.cell
 def _():
     statuses = ["shipped", "pending", "shipped", "cancelled", "shipped"]
-    statuses
+    statuses .count("shipped")
+    return (statuses,)
+
+
+@app.cell
+def _(statuses):
+    shipped_count = 0
+    for _status in statuses:
+        if _status == "shipped":
+            shipped_count = shipped_count + 1
+    print(shipped_count)
+    return (shipped_count,)
+
+
+@app.cell
+def _(statuses):
+    not_shipped_count = 0
+    for _status in statuses:
+        if _status != "shipped":
+            not_shipped_count = not_shipped_count + 1
+    print(not_shipped_count)
+    return
+
+
+@app.cell
+def _(shipped_count, statuses):
+    shipped_percent = shipped_count / len(statuses) * 100
+    print(shipped_percent)
     return
 
 
@@ -412,7 +478,7 @@ def _(mo):
 @app.cell
 def _():
     order_lines = ["notebook", "pen"]
-    order_lines.append(["stapler", "tape"])
+    order_lines.extend(["stapler", "tape"])
     len(order_lines)
     return
 
@@ -444,6 +510,12 @@ def _():
     print(sorted(tickers))
     print(tickers.sort())
     tickers
+    return (tickers,)
+
+
+@app.cell
+def _(tickers):
+    sorted(tickers, reverse=True)
     return
 
 
@@ -477,9 +549,24 @@ def _(mo):
 @app.cell
 def _():
     prices = [12.50, 8.00, 19.99]
-    sale_prices = prices
+    sale_prices = prices[:]
     sale_prices.append(4.99)
     prices
+    return prices, sale_prices
+
+
+@app.cell
+def _(prices, sale_prices):
+    prices is sale_prices
+    return
+
+
+@app.cell
+def _(sale_prices):
+    discounted_sale_prices = []
+    for price in sale_prices:
+        discounted_sale_prices.append(price * 0.9)
+    discounted_sale_prices
     return
 
 
@@ -508,6 +595,30 @@ def _(mo):
 def _():
     print("100" + "50")
     print(100 + 50)
+    return
+
+
+@app.cell
+def _():
+    # in Python the quotes "" make reference to text or a string which is why instead of adding it if you put number in quotes, it just joins the two strings
+    return
+
+
+@app.cell
+def _():
+    print("100" + "0.5")
+    return
+
+
+@app.cell
+def _():
+    print(100 + 0.5)
+    return
+
+
+@app.cell
+def _():
+    print(float("100.5"))
     return
 
 
