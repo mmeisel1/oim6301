@@ -146,7 +146,6 @@ def _():
     for freight_charges in freight_charges:
         step = step + 1
         print(f"--- Pass {step} ---")
-
     return (freight_charges,)
 
 
@@ -703,6 +702,33 @@ def _(mo):
     return
 
 
+@app.cell
+def _(first_order):
+    first_order["Freight"]
+
+    return
+
+
+@app.cell
+def _(first_order):
+    first_order["freight"]
+
+    return
+
+
+@app.cell
+def _(first_order):
+    first_order[0]
+
+    return
+
+
+@app.cell
+def _():
+    # freight failed because it is case sensitive and in the dictionary we have Freight which is why Freight in this case did give me the value. 0 in this case doesn't work because it's not a list so it's not returning the value in the first position
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -789,6 +815,32 @@ def _(mo):
     **Going further.** Look at the three orders with no `ShippedDate`. What do they have
     in common that the other 27 do not? The answer is not about shipping.
     """)
+    return
+
+
+@app.cell
+def _(orders):
+    t=0
+    for f in orders:
+        t=t+f["Freight"]
+
+    print(t)
+    return
+
+
+@app.cell
+def _(orders):
+    t1=0
+    for f1 in orders:
+        if f1["ShippedDate"]==None:
+            t1 += 1
+
+    print(t1)
+    return
+
+
+@app.cell
+def _():
     return
 
 
