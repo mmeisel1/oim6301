@@ -705,21 +705,18 @@ def _(mo):
 @app.cell
 def _(first_order):
     first_order["Freight"]
-
     return
 
 
 @app.cell
 def _(first_order):
     first_order["freight"]
-
     return
 
 
 @app.cell
 def _(first_order):
     first_order[0]
-
     return
 
 
@@ -840,7 +837,15 @@ def _(orders):
 
 
 @app.cell
+def _(orders):
+    top = max(orders, key=lambda o: o["Freight"])
+    print(f"Order {top['OrderID']} has the largest freight: {top['Freight']}")
+    return
+
+
+@app.cell
 def _():
+    #the three orders with no shipping date were all placed in the same month: April. This suggests that shipping delays may be related to order volume or processing time in that specific month.
     return
 
 
@@ -864,10 +869,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    *One row is ...*
-
-    *(Replace this line with your own sentence. If this cell shows you code instead of
-    text, use the cell menu to turn it into a markdown cell.)*
+    * One row is one order that a customer placed with the company, showing who ordered, where it was shipped, when it was ordered and shipped, and what the shipping cost
     """)
     return
 
@@ -905,6 +907,26 @@ def _():
         {"Symbol": "TSLA", "Shares": 150, "Price": 255.70},
     ]
     portfolio
+    return (portfolio,)
+
+
+@app.cell
+def _():
+    #for stock in portfolio:
+        #shares = stock['shares']
+        #price = stock['price']
+        #total += shares * price
+    return
+
+
+@app.cell
+def _(portfolio):
+    total = 0
+    for stock in portfolio:
+        shares = stock['Shares']
+        price = stock['Price']
+        total += shares * price
+    total
     return
 
 

@@ -16,3 +16,4 @@ dependencies = [
 # cryptography 50.0.1 has no prebuilt wheel for Intel macOS + Python 3.14, forcing a Rust/OpenSSL source build.
 # 42.0.8 ships a prebuilt abi3 wheel (macosx_10_12_x86_64) that works across Python versions, so pin to it.
 override-dependencies = ["cryptography==42.0.8"]
+
