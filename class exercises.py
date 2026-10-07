@@ -18,5 +18,11 @@ def _(charges):
     return
 
 
+@app.cell
+def _():
+    # data[0]['name'] - if i wanted to get 'name' from a list {}, class example was the open ai babson code
+    return
+
+
 if __name__ == "__main__":
     app.run()
