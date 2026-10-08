@@ -129,6 +129,26 @@ def _(annual_rates, loan_amount, n):
     return
 
 
+@app.cell
+def _(annual_rates, loan_amount, n):
+    for years in annual_rates:
+        monthly_rate = years/12
+        payment_months = years*12
+        payment = loan_amount* annual_rates/(1-(1+annual_rates)** - n)
+    print(payment)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
