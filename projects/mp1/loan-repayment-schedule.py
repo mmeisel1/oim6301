@@ -105,43 +105,36 @@ def _(mo):
 
 
 @app.cell
-def _(annual_rates, loan_amount, n, r):
-    mortgage_payment = loan_amount * r / (1 - (1 + r) ** -n)
-    for mortgage_payment in annual_rates:
-        mortgage_paymentTotal = loan_amount + mortgage_payment
-    print(mortgage_paymentTotal)
+def _(annual_rates, loan_amount):
+    loan_options = []
+    for years, annual_rate in annual_rates.items():
+        monthly_rate = annual_rate / 12
+        months = years * 12
+        payment = loan_amount * monthly_rate / (1 - (1 + monthly_rate) ** -months)
 
-    return
+        balance = loan_amount
+        principal_paid = 0.0
+        interest_paid = 0.0
 
+        for month in range(months):
+            interest = balance * monthly_rate
+            principal = payment - interest
+            balance = balance - principal
+            principal_paid = principal_paid + principal
+            interest_paid = interest_paid + interest
 
-@app.cell
-def _(annual_rates, loan_amount, n):
-    def _():
-        r = annual_rates()
-        mortgage_payment = loan_amount * r / (1 - (1 + r) ** -n)
+        loan_options.append({
+            "years": years,
+            "payment": payment,
+            "principal_paid": principal_paid,
+            "interest_paid": interest_paid,
+            "ending_balance": balance,
+        })
 
-        for mortgage_payment in annual_rates:
-            mortgage_paymentTotal = loan_amount + mortgage_payment
-        return print(mortgage_paymentTotal)
-
-
-    _()
-    return
-
-
-@app.cell
-def _(annual_rates, loan_amount, n):
-    for years in annual_rates:
-        monthly_rate = years/12
-        payment_months = years*12
-        payment = loan_amount* annual_rates/(1-(1+annual_rates)** - n)
-    print(payment)
-    return
-
-
-@app.cell
-def _():
-    return
+    for option in loan_options:
+        print(f"{option['years']}-year: ${option['payment']:,.2f} per month")
+        print(f"   principal paid ${option['principal_paid']:,.2f}   interest paid ${option['interest_paid']:,.2f}   ending balance ${abs(option['ending_balance']):,.2f}")
+    return (loan_options,)
 
 
 @app.cell
@@ -160,7 +153,27 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(loan_amount, loan_options):
+    def _():
+        print(f"{'Term':<12}{'Monthly payment':>18}{'Total interest':>18}{'Total paid':>18}")
+        print("-" * 66)
+
+        for option in loan_options:
+            total_paid = loan_amount + option["interest_paid"]
+            print(f"{str(option['years']) + '-year':<12}{option['payment']:>18,.2f}{option['interest_paid']:>18,.2f}{total_paid:>18,.2f}")
+
+        print("-" * 66)
+        payment_15 = [option["payment"] for option in loan_options if option["years"] == 15][0]
+        payment_30 = [option["payment"] for option in loan_options if option["years"] == 30][0]
+        interest_15 = [option["interest_paid"] for option in loan_options if option["years"] == 15][0]
+        interest_30 = [option["interest_paid"] for option in loan_options if option["years"] == 30][0]
+
+        payment_diff = payment_15 - payment_30
+        interest_diff = interest_30 - interest_15
+        return print(f"{'Difference':<12}{payment_diff:>18,.2f}{interest_diff:>18,.2f}{interest_diff:>18,.2f}")
+
+
+    _()
     return
 
 
@@ -175,7 +188,30 @@ def _(mo):
 
 
 @app.cell
+def _(loan_amount, loan_options):
+    for _option in loan_options:
+        _months = _option["years"] * 12
+        _total_paid_check = _option["payment"] * _months
+        _interest_check = _total_paid_check - loan_amount
+
+        _principal_ok = round(_option["principal_paid"], 2) == loan_amount
+        _interest_ok = round(_option["interest_paid"], 2) == round(_interest_check, 2)
+
+        print(f"{_option['years']}-year check:")
+        print(f"  principal paid matches loan amount?     {_principal_ok}   (${_option['principal_paid']:,.2f} vs ${loan_amount:,.2f})")
+        print(f"  interest paid matches independent calc? {_interest_ok}   (${_option['interest_paid']:,.2f} vs ${_interest_check:,.2f})")
+    return
+
+
+@app.cell
 def _():
+    960938.64-560938.64
+    return
+
+
+@app.cell
+def _():
+    624035.15-224035.15
     return
 
 
