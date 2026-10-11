@@ -170,9 +170,9 @@ def _(mo):
     3.Dictionary. I want to type in a product name and get its units sold back, and that's what a dictionary does with keys.
     4.Tuple. The shipment info shouldn't change after it's saved, and a tuple can't be changed.
 
-    **D ·**
+    **D ·**I would rather work with a list of tuples. Every holding has the same three values in the same order, so I can read them by position and unpack them directly in the for line. I am only reading the holdings to compute a total, not changing them, so it does not matter that a tuple cannot change.
 
-    **G ·**
+    **G ·** The first result is Babson Park in Florida. The one in Massachusetts is second in the list. Code that always takes [0] would have picked the Florida one without any error, so the latitude, longitude and weather after it would all be for the wrong place.
     """)
     return
 
@@ -516,20 +516,70 @@ def _(mo):
 
 @app.cell
 def _():
-    holdings = [
-        ("AAPL", 100, 173.93),
-        ("MSFT", 50, 319.53),
-        ("GOOG", 80, 131.36),
-        ("AMZN", 200, 129.33),
-        ("NVDA", 20, 410.17),
-        ("TSLA", 150, 255.70),
-    ]
-    holdings
+    def _():
+        holdings = [
+            ("AAPL", 100, 173.93),
+            ("MSFT", 50, 319.53),
+            ("GOOG", 80, 131.36),
+            ("AMZN", 200, 129.33),
+            ("NVDA", 20, 410.17),
+            ("TSLA", 150, 255.70),
+        ]
+        return holdings
+
+        total = 0
+        for _symbol, _shares, _price in holdings:
+            total += _shares * _price
+
+
+    _()
     return
 
 
 @app.cell
 def _():
+    def _():
+        holdings = [
+            ("AAPL", 100, 173.93),
+            ("MSFT", 50, 319.53),
+            ("GOOG", 80, 131.36),
+            ("AMZN", 200, 129.33),
+            ("NVDA", 20, 410.17),
+            ("TSLA", 150, 255.70),
+        ]
+        total = 0
+        for _symbol, _shares, _price in holdings:
+            total += _shares * _price
+        return total
+
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    def _():
+        holdings = [
+            ("AAPL", 100, 173.93),
+            ("MSFT", 50, 319.53),
+            ("GOOG", 80, 131.36),
+            ("AMZN", 200, 129.33),
+            ("NVDA", 20, 410.17),
+            ("TSLA", 150, 255.70),
+        ]
+        costs = {}
+        for _symbol, _shares, _price in holdings:
+            costs[_symbol] = _shares * _price
+
+        biggest = None
+        for _symbol in costs:
+            if biggest is None or costs[_symbol] > costs[biggest]:
+                biggest = _symbol
+        return biggest, costs[biggest]
+
+
+    _()
     return
 
 
@@ -551,6 +601,69 @@ def _(mo):
 
 @app.cell
 def _():
+    #For each ticker I keep a list of the purchases that still have shares left, oldest first. Each one records how many shares are left and the price paid. A buy adds a new purchase to the end of the list.A sale takes shares from the oldest purchase first. If that purchase runs out, I remove it and take the rest from the next one, until the sale is filled.
+
+    return
+
+
+@app.cell
+def _(year_trades):
+    def _():
+        holdings_by_ticker = {}
+        sales = []
+
+        for _date, _ticker, _action, _shares, _price in year_trades:
+            if _ticker not in holdings_by_ticker:
+                holdings_by_ticker[_ticker] = []
+
+            if _action == "buy":
+                holdings_by_ticker[_ticker].append([_shares, _price])
+
+            elif _action == "sell":
+                _shares_to_sell = _shares
+                _cost_basis = 0.0
+
+                while _shares_to_sell > 0:
+                    _oldest_shares, _oldest_price = holdings_by_ticker[_ticker][0]
+
+                    if _oldest_shares <= _shares_to_sell:
+                        _cost_basis += _oldest_shares * _oldest_price
+                        _shares_to_sell -= _oldest_shares
+                        holdings_by_ticker[_ticker].pop(0)
+                    else:
+                        _cost_basis += _shares_to_sell * _oldest_price
+                        holdings_by_ticker[_ticker][0][0] -= _shares_to_sell
+                        _shares_to_sell = 0
+
+                _proceeds = _shares * _price
+                _gain = _proceeds - _cost_basis
+                sales.append({"date": _date, "ticker": _ticker, "gain": _gain})
+
+        return holdings_by_ticker, sales
+
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+app._unparsable_cell(
+    r"""
+    #Summary
+    Shares left: 20 AAPL (bought at $240.00), 10 MSFT (bought at $380.00) ✓
+    Gain per sale: April 15 AAPL sale: $5,400.00 · June 8 MSFT sale: $1,200.00 · August 12 AAPL sale: $1,300.00
+    Total gain: $6,700.00 (AAPL) + $1,200.00 (MSFT) = $7,900.00 ✓
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _():
     year_trades = [
         ("2026-01-05", "AAPL", "buy", 100, 180.00),
         ("2026-02-10", "MSFT", "buy", 40, 400.00),
@@ -562,6 +675,75 @@ def _():
         ("2026-08-12", "AAPL", "sell", 40, 250.00),
     ]
     year_trades
+    return (year_trades,)
+
+
+@app.cell
+def _(year_trades):
+    def _():
+        holdings_by_ticker = {}
+        sales = []
+
+        for _date, _ticker, _action, _shares, _price in year_trades:
+            if _ticker not in holdings_by_ticker:
+                holdings_by_ticker[_ticker] = []
+
+            if _action == "buy":
+                holdings_by_ticker[_ticker].append([_shares, _price])
+
+            elif _action == "sell":
+                _shares_to_sell = _shares
+                _cost_basis = 0.0
+
+                while _shares_to_sell > 0:
+                    _oldest_shares, _oldest_price = holdings_by_ticker[_ticker][0]
+
+                    if _oldest_shares <= _shares_to_sell:
+                        _cost_basis += _oldest_shares * _oldest_price
+                        _shares_to_sell -= _oldest_shares
+                        holdings_by_ticker[_ticker].pop(0)
+                    else:
+                        _cost_basis += _shares_to_sell * _oldest_price
+                        holdings_by_ticker[_ticker][0][0] -= _shares_to_sell
+                        _shares_to_sell = 0
+
+                _proceeds = _shares * _price
+                _gain = _proceeds - _cost_basis
+                sales.append({"date": _date, "ticker": _ticker, "gain": _gain})
+
+        return holdings_by_ticker, sales
+
+
+    _()
+    return
+
+
+@app.cell
+def _(year_trades):
+    held = {}
+    profit = 0
+
+    for _date, _ticker, _action, _shares, _price in year_trades:
+        if _ticker not in held:
+            held[_ticker] = [0, 0]
+        position = held[_ticker]
+
+        if _action == "buy":
+            position[0] += _shares
+            position[1] += _shares * _price
+        else:
+            average = position[1] / position[0]
+            profit += _shares * (_price - average)
+            position[0] -= _shares
+            position[1] -= _shares * average
+
+    print(round(profit, 2))
+    return
+
+
+@app.cell
+def _():
+    #the client prefers average cost because it reports $366.67 less profit this year, which means less tax now. The big April sale drives this: AAPL rose between the two buys, so FIFO sold the cheap January shares first and showed a bigger profit.
     return
 
 
@@ -602,7 +784,7 @@ def _(requests):
     print(babson_url)
     babson_reply = requests.get(babson_url, timeout=10)
     babson_reply.status_code
-    return (babson_reply,)
+    return babson_reply, babson_url
 
 
 @app.cell(hide_code=True)
@@ -754,6 +936,18 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    wellesley_search = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": "Wellesley"},
+    ).json()
+
+    wellesley = wellesley_search["results"][0]
+    wellesley["latitude"], wellesley["longitude"], wellesley["admin1"]
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -761,6 +955,36 @@ def _(mo):
 
     **Going further.** Use F's coordinates to ask for Wellesley's current temperature. Build the address with an f-string, so that changing the town changes the forecast.
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    BabsonPark_search = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": "BabsonPark"},
+    ).json()
+
+    BabsonPark = BabsonPark_search["results"][0]
+    BabsonPark["latitude"], BabsonPark["longitude"], BabsonPark["admin1"]
+    return
+
+
+@app.cell
+def _(requests):
+    babson_park_search = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": "Babson Park"},
+    ).json()
+
+    babson_park = babson_park_search["results"][0]
+    babson_park["name"], babson_park["admin1"], babson_park["latitude"], babson_park["longitude"]
+    return (babson_park_search,)
+
+
+@app.cell
+def _(babson_park_search):
+    [(_place["name"], _place["admin1"]) for _place in babson_park_search["results"]]
     return
 
 
@@ -772,11 +996,95 @@ def _(mo):
     return
 
 
+app._unparsable_cell(
+    r"""
+    def _():
+        def _():
+            week = []
+    for _i in range(len(_daily["time"])):
+    return week.append({
+                    "date": _daily["time"][_i],
+                    "high": _daily["temperature_2m_max"][_i],
+                    "low": _daily["temperature_2m_min"][_i],
+                })
+        return _()
+
+
+    _()
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _(babson_url, requests):
+    babson_week = requests.get(
+        babson_url + "&daily=temperature_2m_max,temperature_2m_min"
+    ).json()
+
+    _daily = babson_week["daily"]
+
+    week = []
+    for _date, _high, _low in zip(
+        _daily["time"],
+        _daily["temperature_2m_max"],
+        _daily["temperature_2m_min"],
+    ):
+        week.append({"date": _date, "high": _high, "low": _low})
+
+    week
+    return (babson_week,)
+
+
+@app.cell
+def _(babson_week):
+    def _():
+        _daily = babson_week["daily"]
+        week = []
+        for _i in range(len(_daily["time"])):
+            week.append({
+                "date": _daily["time"][_i],
+                "high": _daily["temperature_2m_max"][_i],
+                "low": _daily["temperature_2m_min"][_i],
+            })
+        return week
+
+
+    _()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     > **Advanced · I · A second API.** Kraken, a cryptocurrency exchange, publishes prices with no key: `https://api.kraken.com/0/public/Ticker?pair=XBTUSD`. Request it, then change the pair to `XBTUSX`. Compare the status code and the reply with Open-Meteo's misspelled search. Both answer 200 to a request that failed, and each shows the failure in its own way.
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    kraken_good = requests.get("https://api.kraken.com/0/public/Ticker?pair=XBTUSD")
+    kraken_good.status_code, kraken_good.json()
+    return
+
+
+@app.cell
+def _(requests):
+    kraken_bad = requests.get("https://api.kraken.com/0/public/Ticker?pair=XBTUSX")
+    kraken_bad.status_code, kraken_bad.json()
+    return
+
+
+@app.cell
+def _(misspelled_reply):
+    misspelled_reply.status_code, misspelled_reply.json()
+    return
+
+
+@app.cell
+def _():
+    #Both services answered 200 even though the request failed, so the status code alone does not tell me it worked. Kraken says so directly: its reply has an "error" list containing "EQuery:Unknown asset pair" and no "result". Open-Meteo says nothing: its reply holds only "generationtime_ms" and leaves out the "results" key. So with Kraken I should check whether "error" is empty, and with Open-Meteo I should check whether "results" is there before taking [0].
     return
 
 
