@@ -106,35 +106,39 @@ def _(mo):
 
 @app.cell
 def _(annual_rates, loan_amount):
-    loan_options = []
-    for years, annual_rate in annual_rates.items():
-        monthly_rate = annual_rate / 12
-        months = years * 12
-        payment = loan_amount * monthly_rate / (1 - (1 + monthly_rate) ** -months)
+    def _():
+        loan_options = []
+        for years, annual_rate in annual_rates.items():
+            monthly_rate = annual_rate / 12
+            months = years * 12
+            payment = loan_amount * monthly_rate / (1 - (1 + monthly_rate) ** -months)
 
-        balance = loan_amount
-        principal_paid = 0.0
-        interest_paid = 0.0
+            balance = loan_amount
+            principal_paid = 0.0
+            interest_paid = 0.0
 
-        for month in range(months):
-            interest = balance * monthly_rate
-            principal = payment - interest
-            balance = balance - principal
-            principal_paid = principal_paid + principal
-            interest_paid = interest_paid + interest
+            for month in range(months):
+                interest = balance * monthly_rate
+                principal = payment - interest
+                balance = balance - principal
+                principal_paid = principal_paid + principal
+                interest_paid = interest_paid + interest
 
-        loan_options.append({
-            "years": years,
-            "payment": payment,
-            "principal_paid": principal_paid,
-            "interest_paid": interest_paid,
-            "ending_balance": balance,
-        })
+            loan_options.append({
+                "years": years,
+                "payment": payment,
+                "principal_paid": principal_paid,
+                "interest_paid": interest_paid,
+                "ending_balance": balance,
+            })
 
-    for option in loan_options:
-        print(f"{option['years']}-year: ${option['payment']:,.2f} per month")
-        print(f"   principal paid ${option['principal_paid']:,.2f}   interest paid ${option['interest_paid']:,.2f}   ending balance ${abs(option['ending_balance']):,.2f}")
-    return (loan_options,)
+        for option in loan_options:
+            print(f"{option['years']}-year: ${option['payment']:,.2f} per month")
+            print(f"   principal paid ${option['principal_paid']:,.2f}   interest paid ${option['interest_paid']:,.2f}   ending balance ${abs(option['ending_balance']):,.2f}")
+
+
+    _()
+    return
 
 
 @app.cell
@@ -337,7 +341,53 @@ def _():
 
 @app.cell
 def _():
-    #I looked at the Total Paid per mortgage term (15 years, 30 years) and then I subtracted the total interest paid. In both cases I got the total amount to match the original loan amount which was 400k. I also asked my AI to build a way to check it  and it did and showed true because it matched
+    # I looked at the Total Paid per mortgage term (15 years, 30 years) and then I subtracted the total interest paid. In both cases I got the total amount to match the original loan amount which was 400k. I also asked my AI to build a way to check it  and it did and showed true because it matched
+    return
+
+
+@app.cell
+def _():
+    # checking again after receiving the homework feedback
+    return
+
+
+@app.cell
+def _(loan_amount, loan_options):
+    def _():
+        for option in loan_options:
+            # second, independent way: add up every actual payment in the schedule
+            total_paid_check = 0.0
+            for row in option["schedule"]:
+                total_paid_check = round(total_paid_check + row["payment"], 2)
+            interest_check = round(total_paid_check - loan_amount, 2)
+
+            principal_ok = round(option["principal_paid"], 2) == loan_amount
+            interest_ok = round(option["interest_paid"], 2) == interest_check
+            zero_ok = option["schedule"][-1]["balance"] == 0
+
+            print(f"{option['years']}-year check (updated):")
+            print(f"  principal paid matches loan amount?     {principal_ok}   (${option['principal_paid']:,.2f} vs ${loan_amount:,.2f})")
+            print(f"  interest paid matches independent calc? {interest_ok}   (${option['interest_paid']:,.2f} vs ${interest_check:,.2f})")
+            print(f"  final balance is exactly zero?           {zero_ok}")
+
+
+    _()
+    return
+
+
+@app.cell
+def _(loan_amount, loan_options):
+    def _():
+        for option in loan_options:
+            total_paid_check = 0.0
+            for row in option["schedule"]:
+                total_paid_check = round(total_paid_check + row["payment"], 2)
+            interest_check = round(total_paid_check - loan_amount, 2)
+            print(f"{option['years']}-year: total paid ${total_paid_check:,.2f}, "
+                  f"implied interest ${interest_check:,.2f} vs recorded ${option['interest_paid']:,.2f}")
+
+
+    _()
     return
 
 
