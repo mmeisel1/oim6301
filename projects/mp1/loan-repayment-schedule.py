@@ -142,6 +142,88 @@ def _():
     return
 
 
+@app.cell
+def _():
+    #updated version following the received feedback
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _(annual_rates, loan_amount):
+    loan_options = []
+    for years, annual_rate in annual_rates.items():
+        monthly_rate = annual_rate / 12
+        months = years * 12
+        payment = round(loan_amount * monthly_rate / (1 - (1 + monthly_rate) ** -months), 2)
+
+        balance = loan_amount
+        principal_paid = 0.0
+        interest_paid = 0.0
+        total_paid = 0.0
+        schedule = []
+
+        for month in range(1, months + 1):
+            interest = round(balance * monthly_rate, 2)
+            if month == months:
+                # last payment is whatever brings the balance to exactly zero
+                principal = balance
+                this_payment = round(principal + interest, 2)
+            else:
+                principal = round(payment - interest, 2)
+                this_payment = payment
+            balance = round(balance - principal, 2)
+
+            principal_paid = round(principal_paid + principal, 2)
+            interest_paid = round(interest_paid + interest, 2)
+            total_paid = round(total_paid + this_payment, 2)
+
+            schedule.append({
+                "month": month,
+                "payment": this_payment,
+                "interest": interest,
+                "principal": principal,
+                "balance": balance,
+            })
+
+        loan_options.append({
+            "years": years,
+            "payment": payment,
+            "principal_paid": principal_paid,
+            "interest_paid": interest_paid,
+            "total_paid": total_paid,
+            "ending_balance": balance,
+            "schedule": schedule,
+        })
+
+    for option in loan_options:
+        print(f"{option['years']}-year: ${option['payment']:,.2f} per month")
+        print(f"   principal paid ${option['principal_paid']:,.2f}   interest paid ${option['interest_paid']:,.2f}   ending balance ${option['ending_balance']:,.2f}")
+    return (loan_options,)
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _(loan_options):
+    # The full repayment schedule, one row per month, for each term
+    for _option in loan_options:
+        print(f"{_option['years']}-year schedule")
+        print(f"{'Month':>6}{'Payment':>14}{'Interest':>14}{'Principal':>14}{'Balance':>16}")
+        print("-" * 64)
+        for _row in _option["schedule"]:
+            print(f"{_row['month']:>6}{_row['payment']:>14,.2f}{_row['interest']:>14,.2f}{_row['principal']:>14,.2f}{_row['balance']:>16,.2f}")
+        print()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -173,6 +255,44 @@ def _(loan_amount, loan_options):
         return print(f"{'Difference':<12}{payment_diff:>18,.2f}{interest_diff:>18,.2f}{interest_diff:>18,.2f}")
 
 
+    _()
+    return
+
+
+@app.cell
+def _():
+    #The 15 year mortgage with 6.42% rate has a higher monthly mortgage cost (about $798 more vs the 30 year mortgage). With the 15-year mortgage you end up paying less in total interest (saving around $337k in total). I would recommend that my friend pick the 15-year mortgage as long as they can afford the higher monthly payment, since overall they would get larger savings than going with the 30-year mortgage plan. 
+    return
+
+
+@app.cell
+def _():
+    # comparison with a loop in place of a list comprehension (addressing feedback)
+    return
+
+
+@app.cell
+def _(loan_options):
+    def _():
+        payment_15 = 0
+        payment_30 = 0
+        interest_15 = 0
+        interest_30 = 0
+        for option in loan_options:
+            if option["years"] == 15:
+                payment_15 = option["payment"]
+                interest_15 = option["interest_paid"]
+            if option["years"] == 30:
+                payment_30 = option["payment"]
+                interest_30 = option["interest_paid"]
+
+        payment_diff = payment_15 - payment_30
+        interest_diff = interest_30 - interest_15
+
+        print(f"{'Comparison':<12}{'15-year':>18}{'30-year':>18}{'Difference':>18}")
+        print("-" * 66)
+        print(f"{'Payment':<12}{payment_15:>18,.2f}{payment_30:>18,.2f}{payment_diff:>18,.2f}")
+        print(f"{'Interest':<12}{interest_15:>18,.2f}{interest_30:>18,.2f}{interest_diff:>18,.2f}")
     _()
     return
 
