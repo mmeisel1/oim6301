@@ -270,7 +270,26 @@ def count_shares_print(portfolio):
 
 @app.function
 def print_shares(portfolio):
-    print(print_shares(print))
+    """Return the total number of shares across all positions."""
+    print(sum(shares for _, shares, _ in portfolio))
+
+
+@app.cell
+def _(holdings):
+    a=print_shares(holdings)
+    return (a,)
+
+
+@app.cell
+def _(a):
+    print(a)
+    return
+
+
+@app.cell
+def _():
+    # my name (a) holds None. The function prints 600 on the screen, but because it has no return, it doesn’t give the number back, so nothing useful is stored in a. I can't do much with my name. For example, a + 10 would give an error, because you can’t do maths with None.Print shows a value to a person; return gives the value back so code can use it.
+    return
 
 
 @app.cell(hide_code=True)
@@ -405,6 +424,65 @@ def _(mo):
 
     **Going further.** Try `get_temperature("Babson Park")`. Add a second parameter, `state`, so the function uses the first place in that state.
     """)
+    return
+
+
+@app.cell
+def _():
+    def _():
+        import requests
+
+        def get_temperature(town):
+            # 1. Search for the town and take the first result
+            search = requests.get(
+                "https://geocoding-api.open-meteo.com/v1/search",
+                params={"name": town, "count": 1},
+            ).json()
+            place = search["results"][0]
+
+            # 2. Ask for the current temperature at that place's coordinates
+            weather = requests.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params={
+                    "latitude": place["latitude"],
+                    "longitude": place["longitude"],
+                    "current": "temperature_2m",
+                    "temperature_unit": "fahrenheit",
+                },
+            ).json()
+
+            return weather["current"]["temperature_2m"]
+
+
+    _()
+    return
+
+
+@app.cell
+def _(requests):
+    def get_temperature(town):
+        # 1. Search for the town and take the first result
+        search = requests.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={"name": town, "count": 1},
+        ).json()
+        place = search["results"][0]
+
+        # 2. Ask for the current temperature at that place's coordinates
+        weather = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": place["latitude"],
+                "longitude": place["longitude"],
+                "current": "temperature_2m",
+                "temperature_unit": "fahrenheit",
+            },
+        ).json()
+
+        return weather["current"]["temperature_2m"]
+
+
+    get_temperature("Wellesley")
     return
 
 
