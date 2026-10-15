@@ -226,6 +226,33 @@ def _(holdings):
     return
 
 
+@app.cell
+def _(retirement_holdings):
+    print(count_shares(retirement_holdings))
+    return
+
+
+@app.function
+def find_largest(portfolios):
+    largest = None
+    for ticker,shares,prices in portfolios:
+        if largest is None or shares > largest:
+            largest = shares
+    return largest
+
+
+@app.cell
+def _(holdings):
+    print(find_largest(holdings))
+    return
+
+
+@app.cell
+def _(retirement_holdings):
+    print(find_largest(retirement_holdings))
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
