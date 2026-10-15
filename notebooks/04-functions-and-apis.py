@@ -263,6 +263,16 @@ def _(mo):
     return
 
 
+@app.function
+def count_shares_print(portfolio):
+    print(sum(shares for _, shares, _ in portfolio))
+
+
+@app.function
+def print_shares(portfolio):
+    print(print_shares(print))
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
