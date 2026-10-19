@@ -764,6 +764,42 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    def get_all_towns():
+        """Return a list of every town, reading all pages of /ma/towns."""
+        url = "https://oim.zhili.dev/ma/towns"
+
+        # Page 1: keep its towns and find out how many pages there are
+        first_page = requests.get(url, timeout=10).json()
+        towns = first_page["items"]
+        pages = first_page["pagination"]["pages"]
+
+        # Pages 2 through the last one
+        for page in range(2, pages + 1):
+            response = requests.get(url, params={"page": page}, timeout=10).json()
+            towns.extend(response["items"])
+
+        return towns
+
+
+    all_towns = get_all_towns()
+    len(all_towns)
+    return (all_towns,)
+
+
+@app.cell
+def _(all_towns):
+    with_bill = [t for t in all_towns if t["average_single_family_bill_dollars"] is not None]
+
+    highest = max(with_bill, key=lambda t: t["average_single_family_bill_dollars"])
+    lowest = min(with_bill, key=lambda t: t["average_single_family_bill_dollars"])
+
+    print("Highest:", highest["name"], highest["average_single_family_bill_dollars"])
+    print("Lowest:", lowest["name"], lowest["average_single_family_bill_dollars"])
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
