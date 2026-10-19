@@ -154,16 +154,6 @@ def _(holdings):
     return
 
 
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -239,6 +229,39 @@ def find_largest(portfolios):
         if largest is None or shares > largest:
             largest = shares
     return largest
+
+
+@app.cell
+def _(holdings, retirement_holdings):
+    def _():
+        def find_largest(portfolio):
+            """Return (ticker, cost) for the holding with the highest total cost."""
+            ticker, shares, price = max(portfolio, key=lambda pos: pos[1] * pos[2])
+            return (ticker, shares * price)
+
+        print(find_largest(holdings))
+        return print(find_largest(retirement_holdings))
+
+
+    _()
+    return
+
+
+@app.cell
+def _(holdings, retirement_holdings):
+    def _():
+        def find_largest(portfolio, n=1):
+            """Return a list of (ticker, cost) for the n most expensive holdings, largest first."""
+            costs = [(ticker, shares * price) for ticker, shares, price in portfolio]
+            costs.sort(key=lambda item: item[1], reverse=True)
+            return costs[:n]
+
+        print(find_largest(holdings, 3))
+        return print(find_largest(retirement_holdings, 3))
+
+
+    _()
+    return
 
 
 @app.cell
@@ -486,6 +509,39 @@ def _(requests):
     return
 
 
+@app.cell
+def _(requests):
+    def _():
+        def get_temperature(town, state):
+            # 1. Search for the town, then take the first result in the given state
+            search = requests.get(
+                "https://geocoding-api.open-meteo.com/v1/search",
+                params={"name": town, "count": 10},
+            ).json()
+            for result in search["results"]:
+                if result.get("admin1") == state:
+                    place = result
+                    break
+
+            # 2. Ask for the current temperature at that place's coordinates
+            weather = requests.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params={
+                    "latitude": place["latitude"],
+                    "longitude": place["longitude"],
+                    "current": "temperature_2m",
+                    "temperature_unit": "fahrenheit",
+                },
+            ).json()
+
+            return weather["current"]["temperature_2m"]
+        return print(get_temperature("Babson Park", "Massachusetts"))
+
+
+    _()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -495,6 +551,51 @@ def _(mo):
 
     *Check yourself: Dover, Wellesley, Cohasset, Needham, Westwood.*
     """)
+    return
+
+
+@app.cell
+def _():
+    {
+      "items": [
+        {
+          "dor_code": "317",
+          "name": "Wellesley",
+          "county": "string",
+          "type": "string",
+          "area_square_miles": 0,
+          "founded_year": 0,
+          "population": 0,
+          "income_per_capita_dollars": 0,
+          "equalized_value_dollars": 0,
+          "equalized_value_per_capita_dollars": 0,
+          "data_fiscal_year": 0,
+          "average_single_family_value_dollars": 0,
+          "average_single_family_bill_dollars": 0,
+          "finances_fiscal_year": 0
+        }
+      ],
+      "pagination": {
+        "page": 0,
+        "per_page": 0,
+        "total": 0,
+        "pages": 0,
+        "has_next": True,
+        "has_prev": True
+      }
+    }
+    return
+
+
+@app.cell
+def _(requests):
+    response = requests.get(
+        "https://oim.zhili.dev/ma/towns",
+        params={"county": "Norfolk", "sort": "income", "order": "desc", "per_page": 5},
+    ).json()
+
+    for town in response["items"]:
+        print(town["name"], town["income_per_capita_dollars"])
     return
 
 
@@ -511,6 +612,74 @@ def _(mo):
 
     **Going further.** Write `town_history(name)`, which takes a town's name, makes both requests, and returns the history.
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    def _():
+        # Find Wellesley's dor_code with the name parameter
+        towns = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"name": "Wellesley"},
+        ).json()
+        town = towns["items"][0]
+        dor_code = town["dor_code"]
+        print(town["name"], dor_code)
+
+        # 1. Ask the history endpoint for fiscal year 2026 only
+        history = requests.get(
+            f"https://oim.zhili.dev/ma/towns/{dor_code}/history",
+            params={"from_year": 2026, "to_year": 2026},
+        ).json()
+        fy2026 = history["years"][0]
+        print(fy2026)
+
+        # 2. Check the bill: average value x tax rate / 1,000
+        value = fy2026["average_single_family_value_dollars"]
+        rate = fy2026["residential_rate_per_thousand"]
+        bill = fy2026["average_single_family_bill_dollars"]
+
+        computed = value * rate / 1000
+        print("Reported bill:", bill)
+        return print("Computed bill:", round(computed))
+
+
+    _()
+    return
+
+
+@app.cell
+def _(requests):
+    def town_history(name):
+        """Return the yearly finance history for the town with this name."""
+        # 1. Find the town's dor_code
+        towns = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"name": name},
+        ).json()
+        for town in towns["items"]:
+            if town["name"].lower() == name.lower():
+                dor_code = town["dor_code"]
+                break
+
+        # 2. Ask for that town's history
+        history = requests.get(
+            f"https://oim.zhili.dev/ma/towns/{dor_code}/history",
+        ).json()
+        return history["years"]
+
+
+    wellesley = town_history("Wellesley")
+    print(len(wellesley), "years")
+    print(wellesley[-1])
+    return (town_history,)
+
+
+@app.cell
+def _(town_history):
+    for year in town_history("Dover"):
+        print(year["fiscal_year"], year["average_single_family_bill_dollars"])
     return
 
 
