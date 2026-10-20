@@ -75,13 +75,36 @@ def _(mo):
 def _():
     import requests
 
-    county = "Middlesex"
-    budget_dollars = 700000
-    tax_limit_dollars = 8000
     fiscal_year = 2026
 
     BASE_URL = "https://oim.zhili.dev/ma"
-    return budget_dollars, county, fiscal_year, requests, tax_limit_dollars
+    return fiscal_year, requests
+
+
+@app.cell
+def _(mo):
+    county_dropdown = mo.ui.dropdown(
+        options=[
+            "Barnstable", "Berkshire", "Bristol", "Dukes", "Essex", "Franklin",
+            "Hampden", "Hampshire", "Middlesex", "Nantucket", "Norfolk",
+            "Plymouth", "Suffolk", "Worcester",
+        ],
+        value="Middlesex",
+        label="County",
+    )
+    budget_input = mo.ui.number(start=100000, stop=5000000, step=10000, value=700000, label="Budget ($)")
+    tax_limit_input = mo.ui.number(start=1000, stop=50000, step=500, value=8000, label="Tax bill limit ($)")
+
+    mo.vstack([county_dropdown, budget_input, tax_limit_input])
+    return budget_input, county_dropdown, tax_limit_input
+
+
+@app.cell
+def _(budget_input, county_dropdown, tax_limit_input):
+    county = county_dropdown.value
+    budget_dollars = budget_input.value
+    tax_limit_dollars = tax_limit_input.value
+    return budget_dollars, county, tax_limit_dollars
 
 
 @app.cell(hide_code=True)
@@ -355,14 +378,6 @@ def _(fiscal_year, mo, requests, results):
 
 
     _()
-    return
-
-
-@app.cell
-def _(bill, rate, rows, town, value):
-    rows.append({"town": town["name"], "dor_code": town["dor_code"],
-                 "value": value, "rate": rate, "bill": bill,
-                 "income": town["income_per_capita_dollars"]})
     return
 
 
