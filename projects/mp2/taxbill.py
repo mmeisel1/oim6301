@@ -60,13 +60,14 @@ def _():
     #For my structure for my mini project, there’s a lot of steps I can take from what we did in notebook 3 and 4. I would start by writing functions so I can reuse them for any county or budget.First I would use GET on /ma/towns to get the towns in the county and their basic info and use the pagination info in each reply to make sure I get every page. Then I would use GET on each town's history to get its numbers for fiscal year 2026 so every town is compared on the same year. From that I would pull out the average home value, the tax rate, and the average bill.I could use a for loop to go through the towns and keep only the ones under the budget and use return for other data points if needed to get other info from my list. Then I would sort the list so the cheapest bill is first and check how I could put it on a table . I could also use for and print to get the results, in both cases I would also use print to show the results in a readable format
 
 
-
     return
 
 
-@app.cell
-def _():
-    #Inputs
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # My Inputs
+    """)
     return
 
 
@@ -83,9 +84,11 @@ def _():
     return budget_dollars, county, fiscal_year, requests, tax_limit_dollars
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # Functions
+    """)
     return
 
 
@@ -165,9 +168,11 @@ def _(requests):
     return (shortlist,)
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # THE WORK
+    """)
     return
 
 
@@ -177,9 +182,11 @@ def _(budget_dollars, county, fiscal_year, shortlist, tax_limit_dollars):
     return (results,)
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # THE ANSWER
+    """)
     return
 
 
@@ -248,9 +255,11 @@ def _():
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # GOING FURTHER
+    """)
     return
 
 
@@ -293,7 +302,6 @@ def _(mo, results):
 @app.cell
 def _():
     # When ranking by tax rate and town the results now change and now Dracut is placed at the top, being the town with the lowest rate for homes within the budget and under the average bill. These results are different than the initial ones we had since the average bill in this case is still higher (5,737 vs Malden at 4,952). Ultimately, the results are different because the bill depends on both the rate and the home value, but ranking by rate ignores home value, so towns with cheaper homes move up the bill list even if their rate is higher.
-
     return
 
 
