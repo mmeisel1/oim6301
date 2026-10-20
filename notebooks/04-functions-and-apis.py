@@ -14,11 +14,12 @@ __generated_with = "0.24.2"
 app = marimo.App(width="medium", sql_output="polars")
 
 
-@app.cell
-def _():
-    import marimo as mo
-
-    return (mo,)
+app._unparsable_cell(
+    r"""
+    We will import marimo as mo
+    """,
+    name="_"
+)
 
 
 @app.cell(hide_code=True)
