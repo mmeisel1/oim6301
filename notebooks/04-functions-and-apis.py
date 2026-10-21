@@ -14,12 +14,11 @@ __generated_with = "0.24.2"
 app = marimo.App(width="medium", sql_output="polars")
 
 
-app._unparsable_cell(
-    r"""
-    We will import marimo as mo
-    """,
-    name="_"
-)
+@app.cell
+def _():
+    import marimo as mo
+
+    return (mo,)
 
 
 @app.cell(hide_code=True)
@@ -850,12 +849,51 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    board_reply = requests.post(
+        "https://oim.zhili.dev/message",
+        headers={"x-token": "mmeisel1"},
+        json={"message": f"Hi from Manu"},
+        timeout=10,
+    )
+    board_reply.status_code, board_reply.json()
+
+    return
+
+
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     > **Advanced · G · Take it down.** `requests.delete` on the same address, with the same header, removes your line. Run it twice and compare the two replies.
     """)
     return
+
+
+app._unparsable_cell(
+    r"""
+    #{
+      "detail": [
+        {
+          "loc": [
+            "string",
+            0
+          ],
+          "msg": "string",
+          "type": "string",
+          "input": "string",
+          "ctx": {}
+        }
+      ]
+    }
+    """,
+    name="_"
+)
 
 
 @app.cell(hide_code=True)
