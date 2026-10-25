@@ -785,7 +785,7 @@ def _(requests):
 
     all_towns = get_all_towns()
     len(all_towns)
-    return (all_towns,)
+    return all_towns, get_all_towns
 
 
 @app.cell
@@ -850,20 +850,75 @@ def _(mo):
 
 
 @app.cell
+def _():
+    def _():
+        import requests
+
+        resp = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"name": "Boston"},   # question 1 section 4 - change to any town you know - BOSTON
+            timeout=10,
+        )
+        resp.raise_for_status()
+        matches = resp.json()["items"]
+
+        town = matches[0]
+        town_name = town["name"]
+        town_bill = town["average_single_family_bill_dollars"]
+        return town_name, town_bill
+
+
+    _()
+    return
+
+
+@app.cell
 def _(requests):
     board_reply = requests.post(
         "https://oim.zhili.dev/message",
-        headers={"x-token": "mmeisel1"},
         json={"message": f"Hi from Manu"},
         timeout=10,
     )
     board_reply.status_code, board_reply.json()
-
     return
 
 
 @app.cell
 def _():
+    # when I deleted the headers= line and run it again, I got a message saying: Missing x-token header. When looking at the live board, It seems like it now went as 'anonymous' with a 401 error. If the server doesn't know who sent the message, it refuses to post the message.
+    return
+
+
+@app.cell
+def _(get_all_towns):
+    def _():
+        towns = get_all_towns()   # all 351 towns, every page
+
+        populations = [t["population"] for t in towns if t["population"] is not None]
+        avg_population = sum(populations) / len(populations)
+
+        return round(avg_population)
+
+    _()
+    return
+
+
+@app.cell
+def _(get_all_towns):
+    def _():
+        import pandas as pd
+
+        towns = get_all_towns()
+        df = pd.DataFrame(towns)[["name", "population"]]
+        return df.sort_values("population", ascending=False)
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    # I asked what the population per town organized by largest to smallest. Boston is the most populated town 
     return
 
 
@@ -872,6 +927,29 @@ def _(mo):
     mo.md(r"""
     > **Advanced · G · Take it down.** `requests.delete` on the same address, with the same header, removes your line. Run it twice and compare the two replies.
     """)
+    return
+
+
+@app.cell
+def _():
+    def _():
+        import requests
+
+        url = "https://oim.zhili.dev/message"
+        headers = {"x-token": "mmeisel1"}   
+
+        first = requests.delete(url, headers=headers, timeout=10)
+        second = requests.delete(url, headers=headers, timeout=10)
+
+        return (first.status_code, first.json()), (second.status_code, second.json())
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    # it shows the message delete but also showing that there is no message to delete since I only succesfully posted 1 message with my github username. My initial message was succesfully deleted but the second not because it was never pushed properly because the server doesnt publish without my name
     return
 
 
