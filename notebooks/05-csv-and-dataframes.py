@@ -213,28 +213,28 @@ def _():
 
 app._unparsable_cell(
     r"""
-        def find_million_dollar_towns(ma_towns):
-    for towns in ma_towns
-        if towns['average_price'] >= 1000000:
-        if price >= 1000000
-        count = count = 0
-            for town in ma_towns:
-                if town['average_price'] >= 1000000:
-                    count += 1
-            return count    def find_million_dollar_towns(ma_towns):
-            count = 0
-            for town in ma_towns:
-                if town['average_price'] >= 1000000:
-                    count += 1
+    def find_million_dollar_towns(ma_towns):
+        for towns in ma_towns
+    if towns['average_price'] >= 1000000:
+    if price >= 1000000
+    count = count = 0
+        for town in ma_towns:
+            if town['average_price'] >= 1000000:
+                count += 1
+        return count    def find_million_dollar_towns(ma_towns):
+        count = 0
+        for town in ma_towns:
+            if town['average_price'] >= 1000000:
+                count += 1
     """,
     name="_"
 )
 
 
 @app.cell
-def _(towns_from_file):
+def _(population_from_file, town):
     county_counts = {}
-    for town in towns_from_file:
+    for population in population_from_file:
         if int(town["average_single_family_value_dollars"]) >= 1000000:
             county = town["county"]
             if county in county_counts:
@@ -254,6 +254,107 @@ app._unparsable_cell(
     """,
     name="_"
 )
+
+
+app._unparsable_cell(
+    r"""
+    peopleintowns = {}
+    for towns = get_all_towns()
+        df = pd.DataFrame(towns)[["name", "population"]]
+        return df.sort_values("population", ascending=False)
+        return df.sort_values("population", ascending=True)
+    peopleintowns
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _(towns_from_file):
+    def _():
+        smallest = towns_from_file[0]
+        largest = towns_from_file[0]
+
+        for town in towns_from_file:
+            if town["population"] < smallest["population"]:
+                smallest = town
+            if town["population"] > largest["population"]:
+                largest = town
+
+        return (smallest["name"], smallest["population"]), (largest["name"], largest["population"])
+
+    _()
+    return
+
+
+@app.cell
+def _(towns_from_file):
+    def _():
+        priciest = {}   # county -> town with the most expensive average home so far
+
+        for town in towns_from_file:
+            county = town["county"]
+            value = town["average_single_family_value_dollars"]
+
+            if value is None:
+                continue   # skip towns with no home-value data
+
+            if county not in priciest or value > priciest[county]["average_single_family_value_dollars"]:
+                priciest[county] = town
+
+        return {
+            county: (t["name"], t["average_single_family_value_dollars"])
+            for county, t in sorted(priciest.items())
+        }
+
+    _()
+    return
+
+
+@app.cell
+def _(towns_from_file):
+    def _():
+        priciest = towns_from_file[0]
+
+        for town in towns_from_file:
+            if town["average_single_family_value_dollars"] > priciest["average_single_family_value_dollars"]:
+                priciest = town
+
+        return priciest["name"], priciest["average_single_family_value_dollars"]
+
+    _()
+    return
+
+
+@app.cell
+def _(towns_from_file):
+    def _():
+        priciest = None
+
+        for town in towns_from_file:
+            value = town["average_single_family_value_dollars"]
+            if value is None or value == "":
+                continue
+            value = int(float(value))   # make sure it's a number, not text
+
+            if priciest is None or value > priciest[1]:
+                priciest = (town["name"], value)
+
+        return priciest
+
+    _()
+    return
+
+
+@app.cell
+def _(towns_from_file):
+    def _():
+        for t in towns_from_file:
+            if t["name"] in ("Nantucket", "Chilmark"):
+                print(t["name"], t["average_single_family_value_dollars"])
+
+    _()
+    return
 
 
 @app.cell(hide_code=True)
@@ -377,6 +478,41 @@ def _(mo):
     return
 
 
+@app.cell
+def _(town_table):
+    def _():
+        import polars as pl
+
+        my_counts = (
+            town_table
+            .group_by("county")
+            .agg(pl.len().alias("towns"))
+            .sort("county")
+        )
+        return my_counts
+
+    _()
+    return
+
+
+@app.cell
+def _(town_table):
+    def _():
+        import polars as pl
+
+        top_five = (
+            town_table
+            .filter(pl.col("population") > 50000)
+            .sort("average_single_family_bill_dollars", descending=True)
+            .head(5)
+            .select(["name", "population", "average_single_family_bill_dollars"])
+        )
+        return top_five
+
+    _()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -395,7 +531,7 @@ def _(mo, town_table):
         f"""
         SELECT county, COUNT(*) AS towns
         FROM town_table
-        WHERE average_single_family_value_dollars >= 1000000
+        WHERE average_single_family_value_dollars >= 2000000
         GROUP BY county
         ORDER BY towns DESC
         """
@@ -420,6 +556,56 @@ def _(mo):
 
     **Going further.** Write a SQL query of your own on `town_table`, and check its answer in polars.
     """)
+    return
+
+
+@app.cell
+def _():
+    # Raising the bar from $1,000,000 to $2,000,000 is a stricter rule, so no county’s count can go up. Every town above $2M was already above $1M. Counts can only stay the same or go down, and some counties may disappear from the table entirely.
+    return
+
+
+@app.cell
+def _():
+    # Ater making the change the counts when down and now i only have 4 rows with a count max of 2 towns per county
+    return
+
+
+app._unparsable_cell(
+    r"""
+    SELECT name, county, population
+    FROM town_table
+    ORDER BY population DESC
+    LIMIT 5 sql
+    ;
+    """,
+    name="_"
+)
+
+
+app._unparsable_cell(
+    r"""
+    SELECT name, county, population COUNT(*) AS towns
+    FROM town_table
+    WHERE average_single_family_value_dollars >= 2000000
+    GROUP BY county
+    ORDER BY towns DESC
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _(town_table):
+    def _():
+        return (
+            town_table
+            .sort("population", descending=True)
+            .head(5)
+            .select(["name", "county", "population"])
+        )
+
+    _()
     return
 
 
@@ -473,6 +659,67 @@ def _(mo):
 
     **Going further.** Color the bars or dots by a column with `color=`, and explain what the colors add.
     """)
+    return
+
+
+@app.cell
+def _():
+    # QUESTION: Which 10 towns have the highest average single-family tax bill?”
+    return
+
+
+@app.cell
+def _(alt, mo, town_table):
+    top_bills = (
+        town_table
+        .sort("average_single_family_bill_dollars", descending=True)
+        .head(10)
+    )
+
+    top_bills_chart = mo.ui.altair_chart(
+        top_bills.plot.bar(
+            y=alt.Y("name", sort="-x", title="Town"),
+            x=alt.X(
+                "average_single_family_bill_dollars",
+                title="Average single-family tax bill",
+                axis=alt.Axis(format="$,.0f"),
+            ),
+        ).properties(title="The 10 Massachusetts towns with the highest average single-family tax bill")
+    )
+    top_bills_chart
+    return
+
+
+@app.cell
+def _(alt, mo, town_table):
+    def _():
+        top_bills = (
+            town_table
+            .sort("average_single_family_bill_dollars", descending=True)
+            .head(10)
+        )
+
+        top_bills_chart = mo.ui.altair_chart(
+            top_bills.plot.bar(
+                y=alt.Y("name", sort="-x", title="Town"),
+                x=alt.X(
+                    "average_single_family_bill_dollars",
+                    title="Average single-family tax bill",
+                    axis=alt.Axis(format="$,.0f"),
+                ),
+                color=alt.Color("county", title="County"),
+            ).properties(title="The 10 Massachusetts towns with the highest average single-family tax bill")
+        )
+        return top_bills_chart
+
+
+    _()
+    return
+
+
+@app.cell
+def _():
+    # The colors show which county each town is in. Without them, the chart only ranks towns by tax bill. With them, you can see at a glance that the highest bills cluster in a few counties near Boston, like Middlesex and Norfolk.
     return
 
 
