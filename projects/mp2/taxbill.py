@@ -376,6 +376,31 @@ def _(mo):
     return
 
 
+@app.cell
+def _(
+    budget_dollars,
+    county,
+    fiscal_year,
+    results,
+    shortlist,
+    tax_limit_dollars,
+):
+    def new_shortlist_tax_bill_limit_change():
+        """Rerun shortlist with the tax bill limit lowered from $8,000 to $6,000, and compare the counts."""
+        new_tax_limit_dollars = 6000
+        new_results = shortlist(county, budget_dollars, new_tax_limit_dollars, fiscal_year)
+
+        print(f"Original tax bill limit: ${tax_limit_dollars:,} -> {len(results)} towns")
+        print(f"New tax bill limit:      ${new_tax_limit_dollars:,} -> {len(new_results)} towns")
+        print(f"Towns dropped: {len(results) - len(new_results)}")
+
+        return new_results
+
+
+    new_shortlist_tax_bill_limit_change()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
