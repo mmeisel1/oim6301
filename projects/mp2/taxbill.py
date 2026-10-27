@@ -59,7 +59,6 @@ def _(mo):
 def _():
     #For my structure for my mini project, there’s a lot of steps I can take from what we did in notebook 3 and 4. I would start by writing functions so I can reuse them for any county or budget.First I would use GET on /ma/towns to get the towns in the county and their basic info and use the pagination info in each reply to make sure I get every page. Then I would use GET on each town's history to get its numbers for fiscal year 2026 so every town is compared on the same year. From that I would pull out the average home value, the tax rate, and the average bill.I could use a for loop to go through the towns and keep only the ones under the budget and use return for other data points if needed to get other info from my list. Then I would sort the list so the cheapest bill is first and check how I could put it on a table . I could also use for and print to get the results, in both cases I would also use print to show the results in a readable format
 
-
     return
 
 
@@ -75,10 +74,8 @@ def _(mo):
 def _():
     import requests
 
-    fiscal_year = 2026
-
     BASE_URL = "https://oim.zhili.dev/ma"
-    return fiscal_year, requests
+    return BASE_URL, requests
 
 
 @app.cell
@@ -104,7 +101,8 @@ def _(budget_input, county_dropdown, tax_limit_input):
     county = county_dropdown.value
     budget_dollars = budget_input.value
     tax_limit_dollars = tax_limit_input.value
-    return budget_dollars, county, tax_limit_dollars
+    fiscal_year = 2026
+    return budget_dollars, county, fiscal_year, tax_limit_dollars
 
 
 @app.cell(hide_code=True)
@@ -188,7 +186,7 @@ def _(requests):
         rows.sort(key=by_bill)
         return rows
 
-    return (shortlist,)
+    return get_towns, shortlist
 
 
 @app.cell(hide_code=True)
@@ -278,10 +276,66 @@ def _():
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(r"""
+    # 6. How I Know These Numbers Are Right
+
+    An independent check: does the number of towns I collected match what the API itself reports as the total for this county?
+    """)
+    return
+
+
+@app.cell
+def _(BASE_URL, county, get_towns, requests):
+    def _():
+        reply = requests.get(
+            f"{BASE_URL}/towns",
+            params={"county": county, "page": 1, "per_page": 100},
+            timeout=10,
+        ).json()
+        api_total = reply["pagination"]["total"]
+
+        all_towns = get_towns(county)
+        collected_total = len(all_towns)
+
+        check_ok = collected_total == api_total
+        print(f"API reports {api_total} towns in {county} County.")
+        print(f"I collected {collected_total} towns.")
+        print(f"Do they match? {check_ok}")
+
+
+    _()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # WORKING WITH AN AGENT
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # READING IT BACK
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # GOING FURTHER
+    I tried three things past the main task, all in the cells under this heading.
+
+    Ranking by tax rate (the by_rate cell). Dracut has the lowest rate of my 12 towns, but its average bill is still higher than Malden’s ($5,737 vs. $4,952).
+
+    Bill history for the three cheapest towns (the get_bill_history cell). Malden’s bill rose 16% ($4,278 to $4,952) and Waltham’s rose 12% ($4,631 to $5,189) since FY2022, the first year the API has data for them. Dracut’s rose 33% ($4,306 to $5,737) since FY2016. Because the time spans differ, the percentages aren’t directly comparable.
+
+    Bill as a share of income (the income_table cell). In Malden, the average bill of $4,952 is 13.6% of income per person ($36,430). This is income per person, not per household, so it overstates what a household actually pays as a share of its income.
     """)
     return
 
@@ -406,6 +460,14 @@ def _(mo, results):
 
 
     _()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # TIME SPENT
+    """)
     return
 
 
