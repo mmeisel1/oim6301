@@ -65,6 +65,27 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    # Answers (added after feedback)
+
+    Functions:
+
+    get_towns: county in → list of towns out
+    get_year: town code and year in → that year’s numbers out
+    compute_taxbill: home value and tax rate in → tax bill out
+    shortlist: county, budget, tax limit and year in → towns that fit, cheapest bill first
+
+    Addresses: /ma/towns for the towns, and /ma/towns/{dor_code}/history for each town’s numbers.
+
+    Every record: The number of towns I collect should equal the total the API reports.
+
+    Section 6 check: Home value × tax rate ÷ 1,000 should equal the API’s average bill.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # My Inputs
     """)
     return
