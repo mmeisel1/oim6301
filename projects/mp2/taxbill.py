@@ -338,10 +338,40 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(r"""
+    One piece of AI output I did not accept as-is: the 10-year bill history cell.
+
+    What it gave me: the first version took years[0] and years[-1] as the start and end bill, and only printed a town's change if both existed.
+
+    What I changed: when I ran it, only Dracut printed a summary line; Malden and Waltham printed nothing, even though the table above clearly showed real numbers for them. Their history only starts around FY2022, so years[0] (FY2016) was null for both, and the check silently skipped the whole town instead of just the missing years. I changed it to filter out the years with no bill first, then take the first and last from that filtered list.
+
+    How I knew: I compared the printed sentences against the table sitting right above them. Two of three towns had real numbers in the table but no sentence printed, which told me the logic was wrong, not the data.
+
+    When the agent got it right the first time: the pagination check in section 6. I re-requested the API's own reported total independently and compared it to the number of towns my code actually collected (54 vs 54, True), which is proof the two numbers were reached two separate ways and still agree.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # READING IT BACK
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Two functions the agent helped me write:
+
+    get_towns(county): goes in a county name, comes out a list of every town in that county, across however many pages the API splits them into. The line I had to ask about was for page in range(2, pages + 1): — I didn't understand why it started at 2 instead of 1, until I saw that page 1 was already fetched above it to find out how many pages existed in the first place, so the loop only needs to pick up the rest.
+
+    shortlist(county, budget, tax_limit, year): goes in a county, a budget, a tax limit and a fiscal year, comes out a list of towns that pass both limits, cheapest bill first. The line I had to ask about was rows.sort(key=by_bill) — I didn't understand why by_bill had no parentheses after it. The agent explained that .sort() calls by_bill itself, once per row, so handing it the function's name tells sort which value to compare rows by; adding parentheses would call the function once, immediately, instead of letting sort use it.
+
+    My change: In the Inputs cell, I will lower the tax bill limit from $8,000 to $6,000. What I expect: The shortlist will get shorter. Every town with a bill of $6,000 or more will drop out. The sentence in The Answer should change only in how many towns it counts,
     """)
     return
 
