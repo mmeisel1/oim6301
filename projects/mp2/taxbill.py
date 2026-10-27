@@ -224,6 +224,29 @@ def _(budget_dollars, county, fiscal_year, shortlist, tax_limit_dollars):
     return (results,)
 
 
+@app.cell
+def _(mo, results):
+    import csv
+
+    def _():
+        # 1. Make the data folder next to the notebook, if it isn't there yet
+        _folder = mo.notebook_dir() / "data"
+        _folder.mkdir(exist_ok=True)
+        _path = _folder / "shortlist.csv"
+
+        # 2. Write one row per town
+        with open(_path, "w", newline="") as _file:
+            _writer = csv.DictWriter(_file, fieldnames=["town", "dor_code", "value", "rate", "bill", "income"])
+            _writer.writeheader()
+            for _row in results:
+                _writer.writerow(_row)
+
+        print("Saved", len(results), "towns to", _path)
+
+    _()
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
