@@ -78,15 +78,41 @@ def _():
         },
     ]
 
-    # SAMPLE trend signals: placeholders to replace with your own MARMA research.
-    # mainstream_score: 0 = only coolhunters know, 100 = your mum has heard of it.
+    # SAMPLE trend signals: replace with your own MARMA research.
+    # mainstream_score guide:
+    #   0–20  only coolhunters / niche communities
+    #   21–40 early adopters, a few brands testing it
+    #   41–60 growing: press coverage, several brands on it
+    #   61–80 mainstream: high-street and mass brands doing it
+    #   81–100 saturated: your mum has heard of it
     TRENDS = [
-        {"trend": "Varsity / Ivy prep revival", "category": "fashion", "mainstream_score": 62},
-        {"trend": "Shopping inside AI assistants", "category": "tech", "mainstream_score": 28},
-        {"trend": "Fragrance layering kits", "category": "beauty", "mainstream_score": 55},
-        {"trend": "Artist-run members' clubs", "category": "art", "mainstream_score": 18},
-        {"trend": "Fractional luxury resale", "category": "finance", "mainstream_score": 34},
-        {"trend": "Bookstore-as-brand-venue", "category": "fashion", "mainstream_score": 22},
+        # --- beauty ---
+        {"trend": "Sparkly eyeshadow", "category": "beauty", "mainstream_score": 45,
+         "note": "Glitter and shimmer lids coming back after years of matte, 'clean girl' makeup."},
+        {"trend": "Tubing mascara", "category": "beauty", "mainstream_score": 60,
+         "note": "Formulas that wrap lashes in tubes and slide off with warm water: no smudging, no raccoon eyes."},
+        {"trend": "Fragrance layering kits", "category": "beauty", "mainstream_score": 55,
+         "note": "Brands selling scents designed to be worn together to build a personal signature."},
+        # --- beauty retail ---
+        {"trend": "K-beauty", "category": "beauty retail", "mainstream_score": 80,
+         "note": "Korean skincare and makeup moving from online niche to dedicated shelves at major beauty retailers."},
+        # --- marketing/brands ---
+        {"trend": "Community-centric brands", "category": "marketing/brands", "mainstream_score": 50,
+         "note": "Brands built around clubs, run crews and events, where the community is the product."},
+        {"trend": "Bookstore-as-brand-venue", "category": "marketing/brands", "mainstream_score": 22,
+         "note": "Fashion brands taking over bookstores for launches, e.g. Golden Goose at The Coop."},
+        # --- fashion ---
+        {"trend": "Varsity / Ivy prep revival", "category": "fashion", "mainstream_score": 62,
+         "note": "Collegiate codes (varsity jackets, crests, loafers) back across luxury and high street."},
+        # --- tech ---
+        {"trend": "Shopping inside AI assistants", "category": "tech", "mainstream_score": 28,
+         "note": "Brands launching apps inside ChatGPT, e.g. Explore Prada."},
+        # --- art ---
+        {"trend": "Artist-run members' clubs", "category": "art", "mainstream_score": 18,
+         "note": "Private clubs and studios run by artists instead of hospitality groups."},
+        # --- finance ---
+        {"trend": "Fractional luxury resale", "category": "finance", "mainstream_score": 34,
+         "note": "Owning a share of a luxury bag or watch as an investment asset."},
     ]
     return BRAND_MOVES, TRENDS
 
@@ -114,7 +140,7 @@ def _(mo):
 
 @app.cell
 def _(BRAND_MOVES, FastMCP, Literal, Optional, TRENDS):
-    Category = Literal["fashion", "beauty", "art", "finance", "tech"]
+    Category = Literal["fashion", "beauty", "beauty retail", "marketing/brands", "art", "finance", "tech"]
 
     mcp = FastMCP("MARMA Project")
 
