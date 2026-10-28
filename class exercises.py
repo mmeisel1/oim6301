@@ -86,5 +86,16 @@ def _():
     return
 
 
+app._unparsable_cell(
+    r"""
+    # this will show the column names with open(ma_towns_csv, "w", newline="", encoding="utf-8") as _file:
+        _writer = csv.DictWriter(_file, fieldnames=csv_columns, extrasaction="ignore")
+        _writer.writeheader()
+        _writer.writerows(ma_towns)
+    """,
+    name="_"
+)
+
+
 if __name__ == "__main__":
     app.run()
