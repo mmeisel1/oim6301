@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.17.0"
+__generated_with = "0.24.2"
 app = marimo.App(width="medium")
 
 
@@ -9,35 +9,36 @@ def _():
     import marimo as mo
     from typing import Literal, Optional
     from fastmcp import FastMCP, Client
+
     return Client, FastMCP, Literal, Optional, mo
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        # MARMA Project, as a ChatGPT app
+    mo.md(r"""
+    # MARMA Project, as a ChatGPT app
 
-        **Lightning talk demo.** A "brand app" in ChatGPT (like *Explore Prada*) is just a
-        small **Python server** that tells the model: *here are functions you're allowed to call*.
-        It uses the open **Model Context Protocol (MCP)**.
+    **Lightning talk demo.** A "brand app" in ChatGPT (like *Explore Prada*) is just a
+    small **Python server** that tells the model: *here are functions you're allowed to call*.
+    It uses the open **Model Context Protocol (MCP)**.
 
-        This notebook builds one for **MARMA Project**: brand moves and trends
-        *before they go mainstream*.
+    This notebook builds one for **MARMA Project**: brand moves and trends
+    *before they go mainstream*.
 
-        1. **The data**: what MARMA knows
-        2. **The server**: two Python functions become tools
-        3. **What ChatGPT sees**: the schema generated from type hints and docstrings
-        4. **Try it**: call the tools the way ChatGPT would
-        5. **What breaks**: the same tool with a lazy docstring
-        """
-    )
+    1. **The data**: what MARMA knows
+    2. **The server**: two Python functions become tools
+    3. **What ChatGPT sees**: the schema generated from type hints and docstrings
+    4. **Try it**: call the tools the way ChatGPT would
+    5. **What breaks**: the same tool with a lazy docstring
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## 1 · The data""")
+    mo.md(r"""
+    ## 1 · The data
+    """)
     return
 
 
@@ -101,15 +102,13 @@ def _(BRAND_MOVES, TRENDS, mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        ## 2 · The server
+    mo.md(r"""
+    ## 2 · The server
 
-        Two ordinary Python functions. The `@mcp.tool` decorator is the whole trick.
-        **Type hints** become the input rules, and the **docstring** becomes the
-        instructions the model reads to decide *when* to call the tool.
-        """
-    )
+    Two ordinary Python functions. The `@mcp.tool` decorator is the whole trick.
+    **Type hints** become the input rules, and the **docstring** becomes the
+    instructions the model reads to decide *when* to call the tool.
+    """)
     return
 
 
@@ -156,14 +155,12 @@ def _(BRAND_MOVES, FastMCP, Literal, Optional, TRENDS):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        ## 3 · What ChatGPT actually sees
+    mo.md(r"""
+    ## 3 · What ChatGPT actually sees
 
-        ChatGPT never sees the Python code. It gets this JSON: a name, a description,
-        and an input schema, all **generated automatically** from the function above.
-        """
-    )
+    ChatGPT never sees the Python code. It gets this JSON: a name, a description,
+    and an input schema, all **generated automatically** from the function above.
+    """)
     return
 
 
@@ -184,15 +181,13 @@ async def _(Client, mcp, mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        ## 4 · Try it: be the model
+    mo.md(r"""
+    ## 4 · Try it: be the model
 
-        When a user asks ChatGPT *"what's niche in tech right now?"*, the model picks a
-        tool and fills in the arguments. Here **you** fill them in. The call goes through
-        a real MCP client, exactly the protocol ChatGPT uses.
-        """
-    )
+    When a user asks ChatGPT *"what's niche in tech right now?"*, the model picks a
+    tool and fills in the arguments. Here **you** fill them in. The call goes through
+    a real MCP client, exactly the protocol ChatGPT uses.
+    """)
     return
 
 
@@ -241,15 +236,13 @@ async def _(Client, category_pick, city_pick, mcp, mo, score_pick, tool_pick):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        ## 5 · What breaks: same code, lazy description
+    mo.md(r"""
+    ## 5 · What breaks: same code, lazy description
 
-        This tool does **exactly the same thing** as `trend_radar`. But look at what the
-        model gets: no idea what `n` means, what the numbers are, or when to use it.
-        In an app, **the docstring is the product copy for the AI.**
-        """
-    )
+    This tool does **exactly the same thing** as `trend_radar`. But look at what the
+    model gets: no idea what `n` means, what the numbers are, or when to use it.
+    In an app, **the docstring is the product copy for the AI.**
+    """)
     return
 
 
@@ -273,22 +266,126 @@ async def _(Client, FastMCP, TRENDS, mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        ---
-        ### 🗣️ Question for the room
+    mo.md(r"""
+    ---
+    ### 🗣️ Question for the room
 
-        > **If you were Prada, would you rather own the customer on your own site,
-        > or meet them inside ChatGPT, where OpenAI controls the interface?**
+    > **If you were Prada, would you rather own the customer on your own site,
+    > or meet them inside ChatGPT, where OpenAI controls the interface?**
 
-        <details><summary>Going live in real ChatGPT (optional)</summary>
+    <details><summary>Going live in real ChatGPT (optional)</summary>
 
-        Move the server cell into `server.py`, end it with
-        `mcp.run(transport="http", port=8000)`, expose it with a tunnel (e.g. ngrok),
-        and add the URL as a custom app in ChatGPT's developer mode.
-        </details>
-        """
-    )
+    Move the server cell into `server.py`, end it with
+    `mcp.run(transport="http", port=8000)`, expose it with a tunnel (e.g. ngrok),
+    and add the URL as a custom app in ChatGPT's developer mode.
+    </details>
+    """)
+    return
+
+
+@app.cell
+def _():
+    # the code
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    # MARMA Project, as a ChatGPT app
+
+    **Lightning talk demo.** A "brand app" in ChatGPT (like *Explore Prada*) is just a
+    small **Python server** that tells the model: *here are functions you're allowed to call*.
+    It uses the open **Model Context Protocol (MCP)**.
+
+    This notebook builds one for **MARMA Project**: brand moves and trends
+    *before they go mainstream*.
+
+    1. **The data**: what MARMA knows
+    2. **The server**: two Python functions become tools
+    3. **What ChatGPT sees**: the schema generated from type hints and docstrings
+    4. **Try it**: call the tools the way ChatGPT would
+    5. **What breaks**: the same tool with a lazy docstring
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 1 · The data
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 2 · The server
+
+    Two ordinary Python functions. The `@mcp.tool` decorator is the whole trick.
+    **Type hints** become the input rules, and the **docstring** becomes the
+    instructions the model reads to decide *when* to call the tool.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 3 · What ChatGPT actually sees
+
+    ChatGPT never sees the Python code. It gets this JSON: a name, a description,
+    and an input schema, all **generated automatically** from the function above.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 4 · Try it: be the model
+
+    When a user asks ChatGPT *"what's niche in tech right now?"*, the model picks a
+    tool and fills in the arguments. Here **you** fill them in. The call goes through
+    a real MCP client, exactly the protocol ChatGPT uses.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 5 · What breaks: same code, lazy description
+
+    This tool does **exactly the same thing** as `trend_radar`. But look at what the
+    model gets: no idea what `n` means, what the numbers are, or when to use it.
+    In an app, **the docstring is the product copy for the AI.**
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ---
+    ### 🗣️ Question for the room
+
+    > **If you were Prada, would you rather own the customer on your own site,
+    > or meet them inside ChatGPT, where OpenAI controls the interface?**
+
+    <details><summary>Going live in real ChatGPT (optional)</summary>
+
+    Move the server cell into `server.py`, end it with
+    `mcp.run(transport="http", port=8000)`, expose it with a tunnel (e.g. ngrok),
+    and add the URL as a custom app in ChatGPT's developer mode.
+    </details>
+    """)
     return
 
 
