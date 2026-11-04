@@ -224,6 +224,149 @@ def _(mo):
     return
 
 
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        _con.execute("""
+            CREATE TABLE town_bills (
+                name                               VARCHAR NOT NULL REFERENCES towns(name),
+                fiscal_year                        INTEGER NOT NULL,
+                average_single_family_bill_dollars INTEGER CHECK (average_single_family_bill_dollars >= 0),
+                PRIMARY KEY (name, fiscal_year)
+            )
+        """)
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        _con.execute("""
+            CREATE TABLE IF NOT EXISTS town_bills (
+                name                               VARCHAR NOT NULL REFERENCES towns(name),
+                fiscal_year                        INTEGER NOT NULL,
+                average_single_family_bill_dollars INTEGER CHECK (average_single_family_bill_dollars >= 0),
+                PRIMARY KEY (name, fiscal_year)
+            )
+        """)
+        _columns = _con.sql("DESCRIBE town_bills").pl()
+
+    _columns
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        _con.execute("""
+            CREATE TABLE IF NOT EXISTS town_bills (
+                name                               VARCHAR NOT NULL REFERENCES towns(name),
+                fiscal_year                        INTEGER NOT NULL,
+                average_single_family_bill_dollars INTEGER CHECK (average_single_family_bill_dollars >= 0),
+                PRIMARY KEY (name, fiscal_year)
+            )
+        """)
+        _con.execute("""
+            INSERT INTO town_bills VALUES
+                ('Wellesley', 1988, 3129),
+                ('Wellesley', 1989, 3228)
+        """)
+        _rows = _con.sql("SELECT * FROM town_bills").pl()
+
+    _rows
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        for _bad in [
+            "INSERT INTO town_bills VALUES ('Wellesley', 1988, 9999)",  # same town and year again
+            "INSERT INTO town_bills VALUES ('Atlantis', 1988, 9999)",   # town not in towns
+        ]:
+            try:
+                _con.execute(_bad)
+            except duckdb.ConstraintException as _e:
+                print(_e)
+    return
+
+
+@app.cell
+def _(database, duckdb, pl, requests):
+    _base = "https://oim.zhili.dev/ma/towns"
+
+    # Norfolk's town names, from our own database
+    with duckdb.connect(database) as _con:
+        _norfolk = {_r[0] for _r in _con.execute(
+            "SELECT name FROM towns WHERE county = 'Norfolk'"
+        ).fetchall()}
+
+    # Ask every town's history page (codes 1 to 351) and keep the Norfolk ones
+    _rows = []
+    for _code in range(1, 352):
+        _response = requests.get(f"{_base}/{_code}/history", timeout=10)
+        if _response.status_code != 200:
+            continue
+        _history = _response.json()
+        if _history["name"] not in _norfolk:
+            continue
+        for _y in _history["years"]:
+            _rows.append({
+                "name": _history["name"],
+                "fiscal_year": _y["fiscal_year"],
+                "average_single_family_bill_dollars": _y["average_single_family_bill_dollars"],
+            })
+    _history_df = pl.DataFrame(_rows)
+
+    # Into the table; INSERT OR IGNORE skips rows that are already there
+    with duckdb.connect(database) as _con:
+        _con.register("history_df", _history_df)
+        _con.execute("INSERT OR IGNORE INTO town_bills SELECT * FROM history_df")
+        _count = _con.sql("""
+            SELECT count(DISTINCT name) AS towns, count(*) AS rows
+            FROM town_bills
+        """).pl()
+
+    _count
+    return
+
+
+@app.cell
+def _(requests):
+    requests.get("https://oim.zhili.dev/ma/towns", timeout=10).json().keys()
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        _growth = _con.sql("""
+            SELECT new.name,
+                   old.average_single_family_bill_dollars AS bill_then,
+                   new.average_single_family_bill_dollars AS bill_now,
+                   new.average_single_family_bill_dollars
+                 - old.average_single_family_bill_dollars AS growth,
+                   ROUND(100.0 * (new.average_single_family_bill_dollars
+                                - old.average_single_family_bill_dollars)
+                         / old.average_single_family_bill_dollars, 1) AS growth_pct
+            FROM town_bills AS new
+            JOIN town_bills AS old
+              ON new.name = old.name
+             AND old.fiscal_year = new.fiscal_year - 10
+            WHERE new.fiscal_year = (SELECT MAX(fiscal_year) FROM town_bills)
+            ORDER BY growth DESC
+        """).pl()
+
+    _growth
+    return
+
+
+@app.cell
+def _():
+    #going further: Needham’s bill grew the most over 10 years: from $9,587 in 2016 to $16,690 in 2026, an increase of $7,103 (74.1%).
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
