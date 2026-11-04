@@ -388,6 +388,113 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    #1
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT county, COUNT(*) AS n_towns
+        FROM towns
+        GROUP BY county
+        ORDER BY n_towns DESC
+    """)
+    return
+
+
+@app.cell
+def _():
+    #2
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT c.name,
+               COUNT(*)              AS counted,
+               c.towns               AS listed,
+               COUNT(*) = c.towns    AS agree
+        FROM towns AS t
+        JOIN counties AS c ON t.county = c.name
+        GROUP BY c.name, c.towns
+        ORDER BY counted DESC
+    """)
+    return
+
+
+@app.cell
+def _():
+    #check
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT SUM(CASE WHEN counted = listed THEN 1 ELSE 0 END) AS agreeing,
+               COUNT(*) AS counties
+        FROM (
+            SELECT c.name, COUNT(*) AS counted, c.towns AS listed
+            FROM towns AS t
+            JOIN counties AS c ON t.county = c.name
+            GROUP BY c.name, c.towns
+        )
+    """)
+    return
+
+
+@app.cell
+def _():
+    #3
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT county,
+               SUM(population) AS total_pop,
+               SUM(CASE WHEN average_single_family_bill_dollars > 10000
+                        THEN population ELSE 0 END) AS pop_over_10k,
+               ROUND(100.0 * SUM(CASE WHEN average_single_family_bill_dollars > 10000
+                                      THEN population ELSE 0 END)
+                     / SUM(population), 1) AS share_pct
+        FROM towns
+        GROUP BY county
+        ORDER BY share_pct DESC
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT SUM(total_pop) AS grand_total
+        FROM (
+            SELECT county, SUM(population) AS total_pop
+            FROM towns
+            GROUP BY county
+        )
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("SELECT county, SUM(population) AS total_pop FROM towns GROUP BY county")
+    ask("""
+        SELECT county, SUM(population) AS pop_over_10k
+        FROM towns
+        WHERE average_single_family_bill_dollars > 10000
+        GROUP BY county
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
