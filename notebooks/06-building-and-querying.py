@@ -403,6 +403,85 @@ def _(mo):
     return
 
 
+app._unparsable_cell(
+    r"""
+    INSERT INTO towns VALUES ('Wellesley', 'Norfolk', 100, 0, 0)
+    """,
+    name="_"
+)
+
+
+app._unparsable_cell(
+    r"""
+    INSERT INTO towns VALUES ('Nowhere', 'Norfolk', 0, 0, 0)
+    """,
+    name="_"
+)
+
+
+app._unparsable_cell(
+    r"""
+    INSERT INTO towns VALUES ('Nowhere', 'Atlantis', 10, 0, 0)
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _():
+    #all three of them show me the same SyntaxError: invalid syntax
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    _inserts = {
+        "name already there": "INSERT INTO towns VALUES ('Wellesley', 'Norfolk', 100, 0, 0)",
+        "population of zero": "INSERT INTO towns VALUES ('Nowhere', 'Norfolk', 0, 0, 0)",
+        "county not there":   "INSERT INTO towns VALUES ('Nowhere', 'Atlantis', 10, 0, 0)",
+    }
+
+    broken_rules = {}
+    for _rule, _sql in _inserts.items():
+        try:
+            with duckdb.connect(database) as _con:
+                _con.execute(_sql)
+            broken_rules[_rule] = "accepted"
+        except duckdb.ConstraintException as _error:
+            broken_rules[_rule] = str(_error).splitlines()[0]
+
+    broken_rules
+    return
+
+
+app._unparsable_cell(
+    r"""
+    SELECT c.name, COUNT(*) AS counted, c.towns AS listed
+    FROM towns AS t
+    JOIN counties AS c ON t.county = c.name
+    GROUP BY c.name, c.towns
+    HAVING COUNT(*) <> c.towns
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _(database, duckdb):
+    with duckdb.connect(database) as _con:
+        _mismatches = _con.sql("""
+            SELECT c.name, COUNT(*) AS counted, c.towns AS listed
+            FROM towns AS t
+            JOIN counties AS c ON t.county = c.name
+            GROUP BY c.name, c.towns
+            HAVING COUNT(*) <> c.towns
+            ORDER BY c.name
+        """).pl()
+
+    _mismatches
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
