@@ -67,8 +67,8 @@ erDiagram
 - One row of `members` is one Babson student who joined the investment club.
 - One row of `portfolios` is one paper portfolio owned by one member.
 - One row of `assets` is one investment that the club follows, such as a stock, an ETF or a crypto.
-- One row of `asset_tickers` is ...
-- One row of `prices` is ...
-- One row of `trades` is ...
+- One row of `asset_tickers` is one ticker that one asset used during one stretch of time
+- One row of `prices` is the closing price of one asset on one day
+- One row of `trades` is one buy or sell of one asset by one portfolio on one day
 
 ## 4. Design choices
