@@ -143,6 +143,22 @@ for member in members:
             "strategy": random.choice(STRATEGIES),
         })
 
+# Make the members' dates agree with their portfolios (no random numbers here,
+# so the trades below stay exactly the same):
+# - a member joins at least two weeks before their first portfolio,
+# - nobody joins after the as_of date,
+# - the class year fits the join date (a student joins in or after their first fall).
+for member in members:
+    joined = date.fromisoformat(member["join_date"])
+    own = [date.fromisoformat(p["created_date"]) for p in portfolios
+           if p["member_id"] == member["member_id"]]
+    if own:
+        joined = min(joined, min(own) - timedelta(days=14 + 5 * member["member_id"]))
+    joined = min(joined, date(2025, 10, 1))
+    first_fall = joined.year if joined.month >= 9 else joined.year - 1
+    member["join_date"] = joined.isoformat()
+    member["class_year"] = min(member["class_year"], first_fall + 4)
+
 # ---------------------------------------------------------------------------
 # 5. trades, made in date order so holdings are always up to date
 # ---------------------------------------------------------------------------

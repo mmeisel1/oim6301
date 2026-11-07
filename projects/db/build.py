@@ -116,6 +116,9 @@ def _(mo):
     | 391 | question 8 | portfolio 3 sells 10 more units of Exxon than it holds |
     | 392 | question 8 | portfolio 5 sells 10 more units of Johnson & Johnson than it holds |
 
+    My tables do not refuse these four rows, so questions 7 and 8 find them
+    with queries in Part B.
+
     Unattached rows: members 14 and 15 own no portfolio, and the Vanguard
     Total Bond ETF (asset 11) is never traded.
 
