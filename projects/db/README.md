@@ -1,6 +1,6 @@
 # Babson Investment Club Database
 
-## 1. The scenario
+## 1. The Scenario
 
 Scenario B, the Babson Investment Club. The club runs paper portfolios for its
 members and keeps its records in a shared spreadsheet and broker screenshots.
@@ -16,7 +16,6 @@ erDiagram
     ASSETS ||--o{ TRADES : "is traded in"
     ASSETS ||--|{ ASSET_TICKERS : "is listed as"
     ASSETS ||--|{ PRICES : "closes at"
-    PRICES ||--o{ TRADES : "prices"
 
     MEMBERS {
         int member_id PK
@@ -54,7 +53,7 @@ erDiagram
         int trade_id PK
         int portfolio_id FK
         int asset_id FK
-        date trade_date FK
+        date trade_date 
         varchar side "buy or sell"
         decimal quantity
         decimal price
@@ -62,13 +61,13 @@ erDiagram
     }
 ```
 
-## 3. What one row of each table means
+## 3.  What One Row Means
 
 - One row of `members` is one Babson student who joined the investment club.
 - One row of `portfolios` is one paper portfolio owned by one member.
 - One row of `assets` is one investment that the club follows, such as a stock, an ETF or a crypto.
-- One row of `asset_tickers` is one ticker that one asset used during one stretch of time
-- One row of `prices` is the closing price of one asset on one day
-- One row of `trades` is one buy or sell of one asset by one portfolio on one day
+- One row of `asset_tickers` is one ticker that one asset used during one stretch of time.
+- One row of `prices` is the closing price of one asset on one day.
+- One row of `trades` is one buy or sell of one asset by one portfolio on one day.
 
-## 4. Design choices
+## 4. Design Choices

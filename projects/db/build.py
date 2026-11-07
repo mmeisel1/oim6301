@@ -1,36 +1,48 @@
 import marimo
 
-__generated_with = "0.9.0"
-app = marimo.App()
+__generated_with = "0.24.2"
+app = marimo.App(width="medium")
 
 
 @app.cell
 def _():
     import marimo as mo
     import duckdb
+    import polars as pl
     from pathlib import Path
 
     DB_DIR = Path(__file__).parent
     DATA_DIR = DB_DIR / "data"
     DB_PATH = DB_DIR / "database.duckdb"
-    return DATA_DIR, DB_PATH, duckdb, mo
+    AS_OF = "2025-12-31"  # the data covers the 12 months up to this date
+    return AS_OF, DATA_DIR, DB_PATH, duckdb, mo, pl
 
 
 @app.cell
-def _(DB_PATH, duckdb):
-    # Start from an empty database every time, so build.py always
-    # makes the same database from the same CSV files.
-    if DB_PATH.exists():
-        DB_PATH.unlink()
-    con = duckdb.connect(str(DB_PATH))
-    return (con,)
+def _(mo):
+    mo.md("""
+    # Babson Investment Club: building the database
+
+    This notebook builds `database.duckdb` from the CSV files that
+    `make_data.py` writes in `data/`. Run `make_data.py` first.
+    """)
+    return
 
 
 @app.cell
-def _(con):
-    # The six tables. Parent tables come first, because a foreign key
-    # can only point at a table that already exists.
-    con.execute("""
+def _(mo):
+    mo.md("""
+    ## 1. The Tables
+
+    One `CREATE TABLE` per table. Parent tables come first, because a
+    foreign key can only point at a table that already exists.
+    """)
+    return
+
+
+@app.cell
+def _():
+    SCHEMA = """
     CREATE TABLE members (
         member_id   INTEGER PRIMARY KEY,
         first_name  VARCHAR NOT NULL,
@@ -42,24 +54,24 @@ def _(con):
 
     CREATE TABLE portfolios (
         portfolio_id INTEGER PRIMARY KEY,
-        member_id    INTEGER NOT NULL REFERENCES members (member_id),
+        member_id    INTEGER NOT NULL REFERENCES members (member_id),  -- exactly one member
         name         VARCHAR NOT NULL,
         created_date DATE    NOT NULL,
-        strategy     VARCHAR              -- optional, so NULL is allowed
+        strategy     VARCHAR                                           -- optional
     );
 
     CREATE TABLE assets (
         asset_id   INTEGER PRIMARY KEY,
         name       VARCHAR NOT NULL,
         asset_type VARCHAR NOT NULL CHECK (asset_type IN ('stock', 'ETF', 'crypto')),
-        sector     VARCHAR                -- empty for crypto
+        sector     VARCHAR                                             -- crypto has none
     );
 
     CREATE TABLE asset_tickers (
         asset_id   INTEGER NOT NULL REFERENCES assets (asset_id),
         valid_from DATE    NOT NULL,
         ticker     VARCHAR NOT NULL,
-        valid_to   DATE,                  -- NULL means the ticker is still in use
+        valid_to   DATE,                                               -- NULL = still in use
         PRIMARY KEY (asset_id, valid_from),
         CHECK (valid_to IS NULL OR valid_to >= valid_from)
     );
@@ -68,7 +80,7 @@ def _(con):
         asset_id    INTEGER       NOT NULL REFERENCES assets (asset_id),
         price_date  DATE          NOT NULL,
         close_price DECIMAL(18,2) NOT NULL CHECK (close_price > 0),
-        PRIMARY KEY (asset_id, price_date)   -- one close per asset per day
+        PRIMARY KEY (asset_id, price_date)                 -- one close per asset per day
     );
 
     CREATE TABLE trades (
@@ -80,36 +92,218 @@ def _(con):
         quantity     DECIMAL(18,4) NOT NULL CHECK (quantity > 0),
         price        DECIMAL(18,2) NOT NULL CHECK (price > 0),
         fee          DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (fee >= 0),
-        UNIQUE (portfolio_id, asset_id, trade_date),          -- once a day
-        FOREIGN KEY (asset_id, trade_date)                    -- a day with a price
-            REFERENCES prices (asset_id, price_date)
+        UNIQUE (portfolio_id, asset_id, trade_date)        -- at most once a day
     );
+    """
+    return (SCHEMA,)
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 2. The Data
+
+    `make_data.py` writes the data for the 12 months up to `AS_OF`
+    (2025-12-31). It obeys every rule except four trades that are broken
+    on purpose, so that the two rule-check questions have something to find:
+
+    | trade_id | broken on purpose for | what is wrong |
+    |---|---|---|
+    | 389 | question 7 | Apple bought on Saturday 2025-03-15, a day with no closing price |
+    | 390 | question 7 | Microsoft bought on Saturday 2025-08-09, a day with no closing price |
+    | 391 | question 8 | portfolio 3 sells 10 more units of Exxon than it holds |
+    | 392 | question 8 | portfolio 5 sells 10 more units of Johnson & Johnson than it holds |
+
+    Unattached rows: members 14 and 15 own no portfolio, and the Vanguard
+    Total Bond ETF (asset 11) is never traded.
+
+    The cell below deletes the old database and builds it again from the CSVs.
     """)
     return
 
 
 @app.cell
-def _(DATA_DIR, con):
-    # Load each CSV into its table, parents before children.
-    # nullstr='' turns empty cells (no sector, no strategy, no valid_to) into NULL.
+def _(DATA_DIR, DB_PATH, SCHEMA, VIEW_SQL, duckdb):
     TABLES = ["members", "portfolios", "assets", "asset_tickers", "prices", "trades"]
-    for table in TABLES:
-        path = DATA_DIR / f"{table}.csv"
-        con.execute(
-            f"INSERT INTO {table} SELECT * FROM read_csv(?, header = true, nullstr = '')",
-            [str(path)],
-        )
-    return (TABLES,)
+
+    if DB_PATH.exists():
+        DB_PATH.unlink()
+
+    with duckdb.connect(str(DB_PATH)) as build_con:
+        build_con.execute(SCHEMA)
+        for _table in TABLES:
+            # nullstr='' turns empty cells (no sector, no strategy, no valid_to) into NULL
+            build_con.execute(
+                f"INSERT INTO {_table} SELECT * FROM read_csv(?, header = true, nullstr = '')",
+                [str(DATA_DIR / f"{_table}.csv")],
+            )
+        build_con.execute(VIEW_SQL)  # the view from section 7
+
+    built = True
+    return TABLES, built
 
 
 @app.cell
-def _(TABLES, con, mo):
-    # Check: how many rows landed in each table?
-    counts = [
-        {"table": t, "rows": con.execute(f"SELECT COUNT(*) FROM {t}").fetchall()[0][0]}
-        for t in TABLES
-    ]
-    mo.ui.table(counts)
+def _(DB_PATH, built, duckdb, pl):
+    def ask(sql, params=None):
+        """Run one query on a read-only connection and return a polars table."""
+        assert built  # makes marimo run this cell after the build
+        with duckdb.connect(str(DB_PATH), read_only=True) as con:
+            cursor = con.execute(sql, params or [])
+            columns = [c[0] for c in cursor.description]
+            return pl.DataFrame(cursor.fetchall(), schema=columns, orient="row")
+
+    return (ask,)
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 3. A Look at the Data
+
+     NVIDIA's closing price, every trading day of the year.
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    NVIDIA = ask("""
+        SELECT p.price_date, CAST(p.close_price AS DOUBLE) AS close_price
+        FROM prices p
+        JOIN assets a ON a.asset_id = p.asset_id
+        WHERE a.name = 'NVIDIA'
+        ORDER BY p.price_date
+    """)
+    NVIDIA.plot.line(x="price_date", y="close_price")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    **Would a real business look like that?** _Mostly yes: a big tech stock really does move a few percent up and down from day to day like this, but real NVIDIA prices jump on news such as earnings, AI and leadership announcements, and geopolitical events, while these moves are just random numbers.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 4. Row Counts
+    """)
+    return
+
+
+@app.cell
+def _(TABLES, ask, pl):
+    pl.concat(
+        [ask(f"SELECT '{t}' AS table_name, COUNT(*) AS row_count FROM {t}") for t in TABLES]
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 5. A Row It Refuses
+
+    A trade that is neither a buy nor a sell. The `CHECK` on `side`
+    should refuse it, and the database should stay unchanged.
+    """)
+    return
+
+
+@app.cell
+def _(DB_PATH, built, duckdb, mo):
+    assert built
+    try:
+        with duckdb.connect(str(DB_PATH)) as refuse_con:
+            refuse_con.execute("""
+                INSERT INTO trades VALUES
+                    (9999, 1, 1, DATE '2025-06-02', 'hold', 5, 200.00, 0)
+            """)
+        refused = "The insert was accepted. That should not happen!"
+    except duckdb.Error as error:
+        refused = f"Refused: {error}"
+    mo.md(f"```\n{refused}\n```")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 6. Answers You Already Knew
+
+    Three questions I can answer from how I made the data, before asking
+    the database:
+
+    | question | expected |
+    |---|---|
+    | members who own no portfolio | 2 (members 14 and 15) |
+    | assets that were never traded | 1 (Vanguard Total Bond ETF) |
+    | trades on a day their asset has no closing price | 2 (trades 389 and 390) |
+    """)
+    return
+
+
+@app.cell
+def _(ask, pl):
+    known = pl.DataFrame({
+        "question": [
+            "members who own no portfolio",
+            "assets that were never traded",
+            "trades on a day with no closing price",
+        ],
+        "expected": [2, 1, 2],
+        "actual": [
+            ask("""SELECT COUNT(*) FROM members m
+                   WHERE NOT EXISTS (SELECT 1 FROM portfolios p
+                                     WHERE p.member_id = m.member_id)""").item(),
+            ask("""SELECT COUNT(*) FROM assets a
+                   WHERE NOT EXISTS (SELECT 1 FROM trades t
+                                     WHERE t.asset_id = a.asset_id)""").item(),
+            ask("""SELECT COUNT(*) FROM trades t
+                   WHERE NOT EXISTS (SELECT 1 FROM prices p
+                                     WHERE p.asset_id = t.asset_id
+                                       AND p.price_date = t.trade_date)""").item(),
+        ],
+    })
+    known.with_columns((pl.col("expected") == pl.col("actual")).alias("match"))
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 7. A View
+
+    The weekly question: **what does each portfolio hold right now?**
+    For each portfolio and asset, the units bought minus the units sold
+    up to `AS_OF`, keeping only those above zero. Part B question 3 uses it.
+    """)
+    return
+
+
+@app.cell
+def _(AS_OF):
+    VIEW_SQL = f"""
+    CREATE VIEW current_holdings AS
+    SELECT
+        t.portfolio_id,
+        t.asset_id,
+        SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) AS units
+    FROM trades t
+    WHERE t.trade_date <= DATE '{AS_OF}'
+    GROUP BY t.portfolio_id, t.asset_id
+    HAVING SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) > 0
+    """
+    return (VIEW_SQL,)
+
+
+@app.cell
+def _(ask):
+    ask("SELECT * FROM current_holdings ORDER BY portfolio_id, asset_id")
     return
 
 

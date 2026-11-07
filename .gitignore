@@ -185,3 +185,4 @@ __marimo__/
 
 *.duckdb*
 projects/db/database.duckdb
+*.duckdb*

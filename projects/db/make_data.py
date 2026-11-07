@@ -4,8 +4,9 @@ Run it from the root folder of the repository:
     uv run python projects/db/make_data.py
 
 It writes six CSV files into projects/db/data/, one per table.
-The data covers the year 2025 and obeys every rule in the scenario,
-so build.py can load it and the rule checks come back empty.
+The data covers the 12 months up to the as_of date, 2025-12-31.
+It obeys every rule in the scenario except for four trades that are
+broken on purpose, two for question 7 and two for question 8 (section 6).
 """
 
 import csv
@@ -198,7 +199,44 @@ for day in all_days():
         holdings[(p_id, asset_id)] = round(held + change, 4)
 
 # ---------------------------------------------------------------------------
-# 6. write the CSV files
+# 6. four deliberately broken trades, two for each rule-check question.
+#    The assignment asks for exactly two broken rows per "checks a rule"
+#    question, so that questions 7 and 8 have something to find.
+# ---------------------------------------------------------------------------
+def add_trade(portfolio_id, asset_id, day, side, quantity, price, fee=0):
+    trades.append({
+        "trade_id": len(trades) + 1,
+        "portfolio_id": portfolio_id,
+        "asset_id": asset_id,
+        "trade_date": day.isoformat(),
+        "side": side,
+        "quantity": quantity,
+        "price": price,
+        "fee": fee,
+    })
+    return len(trades)
+
+
+# Question 7: two stock trades on a Saturday, when stocks have no closing price.
+broken_q7 = [
+    add_trade(1, 1, date(2025, 3, 15), "buy", 5, 230.00),    # Apple, Sat Mar 15
+    add_trade(2, 2, date(2025, 8, 9), "buy", 3, 450.00),     # Microsoft, Sat Aug 9
+]
+
+# Question 8: two sells of more units than the portfolio holds.
+# Each goes on a day with a closing price, so it breaks only the sell rule.
+broken_q8 = []
+for p_id, asset_id in [(3, 6), (5, 7)]:  # Exxon and J&J
+    day = date(2025, 12, 30) if len(broken_q8) == 0 else date(2025, 12, 29)
+    held = holdings.get((p_id, asset_id), 0)
+    broken_q8.append(add_trade(p_id, asset_id, day, "sell", int(held) + 10,
+                               close[(asset_id, day)]))
+
+print("Broken on purpose, question 7 (no closing price):", broken_q7)
+print("Broken on purpose, question 8 (sells more than held):", broken_q8)
+
+# ---------------------------------------------------------------------------
+# 7. write the CSV files
 # ---------------------------------------------------------------------------
 DATA_DIR.mkdir(exist_ok=True)
 write_csv("members", members)
