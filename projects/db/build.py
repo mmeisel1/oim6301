@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.24.2"
+__generated_with = "0.9.0"
 app = marimo.App(width="medium")
 
 
@@ -9,18 +9,20 @@ def _():
     import marimo as mo
     import duckdb
     import polars as pl
-    from pathlib import Path
 
-    DB_DIR = Path(__file__).parent
-    DATA_DIR = DB_DIR / "data"
-    DB_PATH = DB_DIR / "database.duckdb"
+    database = mo.notebook_dir() / "database.duckdb"
+    data_dir = mo.notebook_dir() / "data"
     AS_OF = "2025-12-31"  # the data covers the 12 months up to this date
-    return AS_OF, DATA_DIR, DB_PATH, duckdb, mo, pl
+
+    def ask(sql):
+        with duckdb.connect(database, read_only=True) as _con:
+            return _con.sql(sql).pl()
+    return AS_OF, ask, data_dir, database, duckdb, mo, pl
 
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     # Babson Investment Club: building the database
 
     This notebook builds `database.duckdb` from the CSV files that
@@ -31,7 +33,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 1. The Tables
 
     One `CREATE TABLE` per table. Parent tables come first, because a
@@ -100,7 +102,7 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 2. The Data
 
     `make_data.py` writes the data for the 12 months up to `AS_OF`
@@ -117,79 +119,74 @@ def _(mo):
     Unattached rows: members 14 and 15 own no portfolio, and the Vanguard
     Total Bond ETF (asset 11) is never traded.
 
-    The cell below deletes the old database and builds it again from the CSVs.
+    The cell below deletes the old database, builds it again from the CSVs,
+    and saves the view from section 7.
     """)
     return
 
 
 @app.cell
-def _(DATA_DIR, DB_PATH, SCHEMA, VIEW_SQL, duckdb):
+def _(AS_OF, SCHEMA, data_dir, database, duckdb):
     TABLES = ["members", "portfolios", "assets", "asset_tickers", "prices", "trades"]
 
-    if DB_PATH.exists():
-        DB_PATH.unlink()
+    database.unlink(missing_ok=True)  # delete the old database first
 
-    with duckdb.connect(str(DB_PATH)) as build_con:
-        build_con.execute(SCHEMA)
+    with duckdb.connect(database) as _con:
+        _con.execute(SCHEMA)
         for _table in TABLES:
             # nullstr='' turns empty cells (no sector, no strategy, no valid_to) into NULL
-            build_con.execute(
+            _con.execute(
                 f"INSERT INTO {_table} SELECT * FROM read_csv(?, header = true, nullstr = '')",
-                [str(DATA_DIR / f"{_table}.csv")],
+                [str(data_dir / f"{_table}.csv")],
             )
-        build_con.execute(VIEW_SQL)  # the view from section 7
 
-    built = True
-    return TABLES, built
-
-
-@app.cell
-def _(DB_PATH, built, duckdb, pl):
-    def ask(sql, params=None):
-        """Run one query on a read-only connection and return a polars table."""
-        assert built  # makes marimo run this cell after the build
-        with duckdb.connect(str(DB_PATH), read_only=True) as con:
-            cursor = con.execute(sql, params or [])
-            columns = [c[0] for c in cursor.description]
-            return pl.DataFrame(cursor.fetchall(), schema=columns, orient="row")
-
-    return (ask,)
+        # The view for section 7: what each portfolio holds on AS_OF.
+        _con.execute(f"""
+            CREATE VIEW current_holdings AS
+            SELECT
+                t.portfolio_id,
+                t.asset_id,
+                SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) AS units
+            FROM trades t
+            WHERE t.trade_date <= DATE '{AS_OF}'
+            GROUP BY t.portfolio_id, t.asset_id
+            HAVING SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) > 0
+        """)
+    return (TABLES,)
 
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 3. A Look at the Data
 
-     NVIDIA's closing price, every trading day of the year.
+    NVIDIA's closing price, every trading day of the year, read straight
+    from `data/prices.csv` with polars.
     """)
     return
 
 
 @app.cell
-def _(ask):
-    NVIDIA = ask("""
-        SELECT p.price_date, CAST(p.close_price AS DOUBLE) AS close_price
-        FROM prices p
-        JOIN assets a ON a.asset_id = p.asset_id
-        WHERE a.name = 'NVIDIA'
-        ORDER BY p.price_date
-    """)
-    NVIDIA.plot.line(x="price_date", y="close_price")
+def _(data_dir, pl):
+    nvidia = (
+        pl.read_csv(data_dir / "prices.csv", try_parse_dates=True)
+        .filter(pl.col("asset_id") == 3)  # asset 3 is NVIDIA
+    )
+    nvidia.plot.line(x="price_date", y="close_price")
     return
 
 
 @app.cell
 def _(mo):
-    mo.md("""
-    **Would a real business look like that?** _Mostly yes: a big tech stock really does move a few percent up and down from day to day like this, but real NVIDIA prices jump on news such as earnings, AI and leadership announcements, and geopolitical events, while these moves are just random numbers.
+    mo.md(r"""
+    **Would a real business look like that?** Mostly yes: a big tech stock really does move a few percent up and down from day to day like this, but real NVIDIA prices jump on news such as earnings, AI and leadership announcements, and geopolitical events, while these moves are just random numbers.
     """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 4. Row Counts
     """)
     return
@@ -205,7 +202,7 @@ def _(TABLES, ask, pl):
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 5. A Row It Refuses
 
     A trade that is neither a buy nor a sell. The `CHECK` on `side`
@@ -215,11 +212,11 @@ def _(mo):
 
 
 @app.cell
-def _(DB_PATH, built, duckdb, mo):
-    assert built
+def _(TABLES, database, duckdb, mo):
+    assert TABLES  # run this after the build
     try:
-        with duckdb.connect(str(DB_PATH)) as refuse_con:
-            refuse_con.execute("""
+        with duckdb.connect(database) as _con:
+            _con.execute("""
                 INSERT INTO trades VALUES
                     (9999, 1, 1, DATE '2025-06-02', 'hold', 5, 200.00, 0)
             """)
@@ -232,7 +229,7 @@ def _(DB_PATH, built, duckdb, mo):
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 6. Answers You Already Knew
 
     Three questions I can answer from how I made the data, before asking
@@ -248,7 +245,8 @@ def _(mo):
 
 
 @app.cell
-def _(ask, pl):
+def _(TABLES, ask, pl):
+    assert TABLES  # run this after the build
     known = pl.DataFrame({
         "question": [
             "members who own no portfolio",
@@ -275,34 +273,21 @@ def _(ask, pl):
 
 @app.cell
 def _(mo):
-    mo.md("""
+    mo.md(r"""
     ## 7. A View
 
     The weekly question: **what does each portfolio hold right now?**
-    For each portfolio and asset, the units bought minus the units sold
-    up to `AS_OF`, keeping only those above zero. Part B question 3 uses it.
+    The view `current_holdings`, saved in the build cell in section 2,
+    gives for each portfolio and asset the units bought minus the units
+    sold up to `AS_OF`, keeping only those above zero. Part B question 3
+    uses it.
     """)
     return
 
 
 @app.cell
-def _(AS_OF):
-    VIEW_SQL = f"""
-    CREATE VIEW current_holdings AS
-    SELECT
-        t.portfolio_id,
-        t.asset_id,
-        SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) AS units
-    FROM trades t
-    WHERE t.trade_date <= DATE '{AS_OF}'
-    GROUP BY t.portfolio_id, t.asset_id
-    HAVING SUM(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) > 0
-    """
-    return (VIEW_SQL,)
-
-
-@app.cell
-def _(ask):
+def _(TABLES, ask):
+    assert TABLES  # run this after the build
     ask("SELECT * FROM current_holdings ORDER BY portfolio_id, asset_id")
     return
 
