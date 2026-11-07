@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "altair>=6.3.0",
+    "duckdb>=1.5.5",
     "faker>=40.39.0",
     "fastmcp>=4.1.4",
     "marimo[recommended]>=0.24.2",

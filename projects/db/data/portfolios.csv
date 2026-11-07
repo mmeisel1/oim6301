@@ -1,0 +1,20 @@
+portfolio_id,member_id,name,created_date,strategy
+1,1,Ava's Portfolio 1,2025-03-01,Index
+2,1,Ava's Portfolio 2,2025-03-01,Growth
+3,2,Liam's Portfolio 1,2025-03-01,Growth
+4,3,Sofia's Portfolio 1,2025-03-01,Growth
+5,3,Sofia's Portfolio 2,2025-01-26,Index
+6,3,Sofia's Portfolio 3,2025-03-01,Dividend
+7,4,Noah's Portfolio 1,2024-08-30,Index
+8,5,Mia's Portfolio 1,2024-06-13,Index
+9,5,Mia's Portfolio 2,2024-11-12,Crypto
+10,6,Ethan's Portfolio 1,2024-12-03,Crypto
+11,7,Isabella's Portfolio 1,2025-03-01,Crypto
+12,8,Lucas's Portfolio 1,2025-03-01,Value
+13,8,Lucas's Portfolio 2,2025-03-01,Crypto
+14,9,Amelia's Portfolio 1,2024-11-18,Dividend
+15,10,Mateo's Portfolio 1,2025-03-01,Crypto
+16,11,Harper's Portfolio 1,2024-08-25,Value
+17,12,Leo's Portfolio 1,2025-03-01,Value
+18,12,Leo's Portfolio 2,2025-03-01,Growth
+19,13,Zoe's Portfolio 1,2025-02-01,Index

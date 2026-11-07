@@ -184,3 +184,4 @@ cython_debug/
 __marimo__/
 
 *.duckdb*
+projects/db/database.duckdb

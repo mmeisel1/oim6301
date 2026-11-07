@@ -1,0 +1,15 @@
+asset_id,name,asset_type,sector
+1,Apple,stock,Technology
+2,Microsoft,stock,Technology
+3,NVIDIA,stock,Technology
+4,Amazon,stock,Consumer Discretionary
+5,JPMorgan Chase,stock,Financials
+6,Exxon Mobil,stock,Energy
+7,Johnson & Johnson,stock,Health Care
+8,Block,stock,Financials
+9,SPDR S&P 500 ETF,ETF,
+10,Invesco QQQ ETF,ETF,
+11,Vanguard Total Bond ETF,ETF,
+12,Bitcoin,crypto,
+13,Ethereum,crypto,
+14,Solana,crypto,
