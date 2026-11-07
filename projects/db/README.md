@@ -61,7 +61,7 @@ erDiagram
     }
 ```
 
-## 3.  What One Row Means
+## 3. What One Row Means
 
 - One row of `members` is one Babson student who joined the investment club.
 - One row of `portfolios` is one paper portfolio owned by one member.
@@ -71,3 +71,13 @@ erDiagram
 - One row of `trades` is one buy or sell of one asset by one portfolio on one day.
 
 ## 4. Design Choices
+
+**1. Keys where the business already had one.** Members already had a school email, but I used `member_id` as the key and made email UNIQUE so no two members share one. Assets already had tickers, but a ticker can change (Block went from SQ to XYZ), so I used `asset_id` as the key and gave tickers their own table.
+
+**2. Optional relationships.** A member may own no portfolio (members 14 and 15), a portfolio may have no trades yet, and an asset may never be traded (the Vanguard Total Bond ETF). A trade always belongs to exactly one portfolio and one asset.
+
+**3. Rules my tables cannot hold.** "A portfolio never sells more than it holds" needs to add up earlier trades, which a CHECK cannot do, so I check it with a query in question 8. "A trade happens on a day its asset has a closing price" is also checked with a query, in question 7, so that the two broken rows for that question can load.
+
+**4. An agent proposal I changed.** My agent first charted Bitcoin in "A Look at the Data". I changed it to NVIDIA because I wanted to look at an AI tech company.
+
+Note: sections 1–3 were committed in `be252ee` ("What one row of each table means (completed)"), before `build.py` was added. That is my "db: add the question and the plan" commit.
