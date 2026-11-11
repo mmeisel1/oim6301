@@ -254,6 +254,19 @@ def _(ask, towns_database):
     return
 
 
+@app.cell
+def _(ask, towns_database):
+    ask(towns_database, """
+        SELECT c.name
+        FROM counties AS c
+        LEFT JOIN towns AS t
+            ON t.county = c.name AND t.average_single_family_bill_dollars > 15000
+        WHERE t.name IS NULL
+        ORDER BY c.name
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -286,6 +299,33 @@ def _(mo):
     *Check yourself: four territories, Columbia, Bentonville, Dallas and Austin.*
 
     **Going further.** List the employees with the number of territories each covers, and check that the counts add up to the rows of `employee_territories`. Then find the same four territories with `WHERE NOT EXISTS (...)`.
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT t.TerritoryID, t.TerritoryDescription
+        FROM territories AS t
+        LEFT JOIN employee_territories AS et
+            ON t.TerritoryID = et.TerritoryID
+        WHERE et.TerritoryID IS NULL
+        ORDER BY t.TerritoryID
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT e.EmployeeID, e.FirstName, e.LastName,
+               COUNT(et.TerritoryID) AS territories
+        FROM employees AS e
+        LEFT JOIN employee_territories AS et
+            ON e.EmployeeID = et.EmployeeID
+        GROUP BY e.EmployeeID, e.FirstName, e.LastName
+        ORDER BY territories DESC
     """)
     return
 
