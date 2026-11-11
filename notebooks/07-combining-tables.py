@@ -241,6 +241,19 @@ def _(ask, towns_database):
     return
 
 
+@app.cell
+def _(ask, towns_database):
+    ask(towns_database, """
+        SELECT c.name, t.name, t.average_single_family_bill_dollars
+        FROM counties AS c
+        JOIN towns AS t
+            ON t.county = c.name AND t.average_single_family_bill_dollars > 15000
+        -- WHERE t.name IS NULL
+        ORDER BY t.average_single_family_bill_dollars DESC
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
