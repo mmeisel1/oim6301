@@ -536,6 +536,37 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    MANAGER NORTHWIND QUESTION
+    """)
+    return
+
+
+@app.cell
+def _():
+    #Which customer placed the most expensive order?
+
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT c.CompanyName,
+               o.OrderID,
+               ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) AS order_total
+        FROM orders AS o
+        JOIN customers AS c      ON o.CustomerID = c.CustomerID
+        JOIN order_details AS od ON od.OrderID = o.OrderID
+        GROUP BY c.CompanyName, o.OrderID
+        ORDER BY order_total DESC
+        LIMIT 1
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## ✏️ F · Every Territory With Its Count
 
     For each territory, count the employees who cover it, and keep the territories that nobody covers in the result, with 0.
