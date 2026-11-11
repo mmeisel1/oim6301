@@ -637,9 +637,11 @@ def _():
 def _(ask):
     ask("""
         SELECT c.name,
-               COUNT(*)              AS counted,
-               c.towns               AS listed,
-               COUNT(*) = c.towns    AS agree
+               COUNT(*)                                          AS counted,
+               c.towns                                           AS listed,
+               COUNT(*) = c.towns                                AS agree,
+               ROUND(AVG(t.population))                          AS avg_pop,
+               ROUND(AVG(t.average_single_family_bill_dollars))  AS avg_bill
         FROM towns AS t
         JOIN counties AS c ON t.county = c.name
         GROUP BY c.name, c.towns
