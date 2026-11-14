@@ -100,7 +100,7 @@ def _(mo, pl, requests):
         town_rows = pl.DataFrame(_records).select(town_columns)
 
     county_rows.shape, town_rows.shape
-    return
+    return (town_rows,)
 
 
 @app.cell(hide_code=True)
@@ -740,6 +740,69 @@ def _(ask):
         FROM towns
         WHERE average_single_family_bill_dollars > 10000
         GROUP BY county
+    """)
+    return
+
+
+@app.cell
+def _():
+    #going further
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    **Going further:** In each county, how many towns have an average bill over $10,000, and what is the highest bill?
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT county,
+               SUM(CASE WHEN average_single_family_bill_dollars > 10000
+                        THEN 1 ELSE 0 END) AS n_over_10k,
+               format('{:,}', CAST(ROUND(MAX(average_single_family_bill_dollars)) AS BIGINT)) AS max_bill
+        FROM towns
+        GROUP BY county
+        ORDER BY n_over_10k DESC, county
+    """)
+    return
+
+
+@app.cell
+def _(pl, town_rows):
+    (
+        town_rows
+        .group_by("county")
+        .agg(
+            (pl.col("average_single_family_bill_dollars") > 10000).sum().alias("n_over_10k"),
+            pl.col("average_single_family_bill_dollars").max().round(0).alias("max_bill"),
+        )
+        .sort(["n_over_10k", "county"], descending=[True, False])
+    )
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT COUNT(*) AS towns_over_10k
+        FROM towns
+        WHERE average_single_family_bill_dollars > 10000
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    65 towns have an average bill over $10,000, and 26 of them (40%) are in Middlesex.
+    Middlesex and Norfolk have the highest bills, both above $26,000.
+    Six counties have no town over $10,000.
+    The SQL query (`GROUP BY county`) and the polars check on `town_rows` give the same counts and highest bills for every county
     """)
     return
 
