@@ -564,6 +564,21 @@ def _(ask, northwind_database):
     return
 
 
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT ROUND(AVG(order_total), 2) AS avg_order,
+               COUNT(*)                   AS orders
+        FROM (
+            SELECT od.OrderID,
+                   SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) AS order_total
+            FROM order_details AS od
+            GROUP BY od.OrderID
+        )
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
