@@ -566,6 +566,111 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT c.CategoryName,
+               round(CAST(sum(d.UnitPrice * d.Quantity * (1 - d.Discount)) AS DOUBLE), 2) AS revenue
+        FROM order_details AS d
+        JOIN orders     AS o ON o.OrderID    = d.OrderID
+        JOIN products   AS p ON p.ProductID  = d.ProductID
+        JOIN categories AS c ON c.CategoryID = p.CategoryID
+        WHERE o.ShipCountry = 'USA'
+        GROUP BY c.CategoryName
+        ORDER BY revenue DESC
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT
+            (SELECT round(CAST(sum(revenue) AS DOUBLE), 2) FROM (
+                SELECT c.CategoryName,
+                       sum(d.UnitPrice * d.Quantity * (1 - d.Discount)) AS revenue
+                FROM order_details AS d
+                JOIN orders     AS o ON o.OrderID    = d.OrderID
+                JOIN products   AS p ON p.ProductID  = d.ProductID
+                JOIN categories AS c ON c.CategoryID = p.CategoryID
+                WHERE o.ShipCountry = 'USA'
+                GROUP BY c.CategoryName
+            )) AS sum_of_categories,
+            (SELECT round(CAST(sum(d.UnitPrice * d.Quantity * (1 - d.Discount)) AS DOUBLE), 2)
+             FROM order_details AS d
+             JOIN orders AS o ON o.OrderID = d.OrderID
+             WHERE o.ShipCountry = 'USA') AS usa_revenue
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The eight categories add up to 63,856,337.63, the same as the USA total from orders and order_details alone, so the joins with products and categories didn’t lose or repeat any lines.
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT c.CategoryName,
+               year(o.OrderDate) AS year,
+               round(CAST(sum(d.UnitPrice * d.Quantity * (1 - d.Discount)) AS DOUBLE), 2) AS revenue
+        FROM order_details AS d
+        JOIN orders     AS o ON o.OrderID    = d.OrderID
+        JOIN products   AS p ON p.ProductID  = d.ProductID
+        JOIN categories AS c ON c.CategoryID = p.CategoryID
+        GROUP BY c.CategoryName, year(o.OrderDate)
+        ORDER BY c.CategoryName, year
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        WITH yearly AS (
+            SELECT c.CategoryName,
+                   year(o.OrderDate) AS yr,
+                   sum(d.UnitPrice * d.Quantity * (1 - d.Discount)) AS revenue
+            FROM order_details AS d
+            JOIN orders     AS o ON o.OrderID    = d.OrderID
+            JOIN products   AS p ON p.ProductID  = d.ProductID
+            JOIN categories AS c ON c.CategoryID = p.CategoryID
+            GROUP BY c.CategoryName, year(o.OrderDate)
+        ),
+        bounds AS (
+            SELECT
+                CASE WHEN CAST(min(OrderDate) AS DATE) > make_date(year(min(OrderDate)), 1, 1)
+                     THEN year(min(OrderDate)) + 1 ELSE year(min(OrderDate)) END AS first_year,
+                CASE WHEN CAST(max(OrderDate) AS DATE) < make_date(year(max(OrderDate)), 12, 31)
+                     THEN year(max(OrderDate)) - 1 ELSE year(max(OrderDate)) END AS last_year
+            FROM orders
+        )
+        SELECT y1.CategoryName,
+               b.first_year,
+               round(CAST(y1.revenue AS DOUBLE), 2) AS first_year_revenue,
+               b.last_year,
+               round(CAST(y2.revenue AS DOUBLE), 2) AS last_year_revenue,
+               round(CAST(100.0 * (y2.revenue - y1.revenue) / y1.revenue AS DOUBLE), 1) AS growth_pct
+        FROM bounds AS b
+        JOIN yearly AS y1 ON y1.yr = b.first_year
+        JOIN yearly AS y2 ON y2.CategoryName = y1.CategoryName AND y2.yr = b.last_year
+        ORDER BY growth_pct DESC
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Beverages grew the most, by 6.2%, from 7,770,360.75 to 8,253,251
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
