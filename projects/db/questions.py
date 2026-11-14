@@ -21,7 +21,7 @@ def _(duckdb, mo):
         with duckdb.connect(database, read_only=True) as _con:
             return _con.sql(sql).pl()
 
-    return (ask,)
+    return AS_OF, ask
 
 
 @app.cell
@@ -44,6 +44,35 @@ def _(mo):
 def _(mo):
     mo.md(r"""
     **Question 1**: For each portfolio over the last 30 days: the number of trades, the money spent on buys with fees added, and the money received from sells with fees taken off.
+    """)
+    return
+
+
+@app.cell
+def _(AS_OF, ask):
+    ask(f"""
+        SELECT p.portfolio_id,
+               p.name AS portfolio,
+               count(t.trade_id) AS trades,
+               round(CAST(coalesce(sum(CASE WHEN t.side = 'buy'
+                                            THEN t.quantity * t.price + t.fee END), 0) AS DOUBLE), 2) AS spent_on_buys,
+               round(CAST(coalesce(sum(CASE WHEN t.side = 'sell'
+                                            THEN t.quantity * t.price - t.fee END), 0) AS DOUBLE), 2) AS received_from_sells
+        FROM portfolios AS p
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+           AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 30 DAY
+           AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY p.portfolio_id, p.name
+        ORDER BY p.portfolio_id
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    In the 30 days ending 2025-12-31, the 19 portfolios made 46 trades, spending $87,251.51 on buys (fees added) and receiving $11,594.59 from sells (fees taken off). Liam’s Portfolio 1 was the most active, with 5 trades, and Leo’s Portfolio 1 spent the most, $16,800.18. I read “each portfolio” as all 19, so the two with no trades in that window, Ava’s Portfolio 2 and Harper’s Portfolio 1, are listed with 0.
     """)
     return
 
