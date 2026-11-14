@@ -651,6 +651,31 @@ def _(ask):
 
 
 @app.cell
+def _(ask):
+    ask("""
+        SELECT
+            (SELECT SUM(n_towns)
+             FROM (SELECT county, COUNT(*) AS n_towns
+                   FROM towns GROUP BY county)) AS sum_of_counts,
+            (SELECT COUNT(*) FROM towns)        AS rows_in_towns
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Why the counts add up to the number of rows in `towns`:**
+    `GROUP BY county` puts every row of `towns` into exactly one group,
+    the group for its county. No row lands in two groups, and none is
+    left out, because there is no `WHERE` filter. `COUNT(*)` counts the
+    rows in each group, so adding up all the groups counts every row
+    once: 351.
+    """)
+    return
+
+
+@app.cell
 def _():
     #check
     return
