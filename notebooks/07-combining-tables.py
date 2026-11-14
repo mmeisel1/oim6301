@@ -716,7 +716,7 @@ def _(mo, os, pl):
             return pl.DataFrame(_cursor.fetchall(), schema=_columns, orient="row")
 
     ask_server("SELECT TOP 5 SalesOrderID, OrderDate, Freight FROM Sales.SalesOrderHeader ORDER BY SalesOrderID")
-    return
+    return (ask_server,)
 
 
 @app.cell(hide_code=True)
@@ -739,6 +739,111 @@ def _(mo):
     3. Find the customers in `Sales.Customer` who never placed an order, and the products in `Production.Product` that never sold. *Check yourself: 701 customers and 238 products.*
 
     **Going further.** Answer one question of your own about AdventureWorks that needs three tables, and check it against a total you can get from one of them.
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT
+            (SELECT COUNT(*) FROM Sales.SalesOrderHeader) AS order_headers,
+            (SELECT COUNT(*) FROM Sales.SalesOrderDetail) AS order_details,
+            (SELECT COUNT(*)
+             FROM Sales.SalesOrderHeader AS h
+             JOIN Sales.SalesOrderDetail AS d ON d.SalesOrderID = h.SalesOrderID) AS joined
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT
+            (SELECT CAST(SUM(Freight) AS FLOAT) FROM Sales.SalesOrderHeader) AS freight,
+            (SELECT CAST(SUM(h.Freight) AS FLOAT)
+             FROM Sales.SalesOrderHeader AS h
+             JOIN Sales.SalesOrderDetail AS d ON d.SalesOrderID = h.SalesOrderID) AS freight_after_the_join
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT c.CustomerID, c.PersonID, c.StoreID
+        FROM Sales.Customer AS c
+        LEFT JOIN Sales.SalesOrderHeader AS h ON h.CustomerID = c.CustomerID
+        WHERE h.SalesOrderID IS NULL
+        ORDER BY c.CustomerID
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT p.ProductID, p.Name
+        FROM Production.Product AS p
+        LEFT JOIN Sales.SalesOrderDetail AS d ON d.ProductID = p.ProductID
+        WHERE d.SalesOrderID IS NULL
+        ORDER BY p.ProductID
+    """)
+    return
+
+
+@app.cell
+def _():
+    #going further
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Going further: Revenue by Product Subcategory
+
+    **Question:** Which product subcategory brings in the most revenue, and do the subcategories add up to the total revenue in `Sales.SalesOrderDetail`?
+
+    This needs three tables: `Sales.SalesOrderDetail` for the revenue (`LineTotal`), `Production.Product` to find each product's subcategory, and `Production.ProductSubcategory` for the subcategory's name.
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT COALESCE(s.Name, '(none)') AS subcategory,
+               CAST(SUM(d.LineTotal) AS FLOAT) AS revenue
+        FROM Sales.SalesOrderDetail AS d
+        JOIN Production.Product AS p ON p.ProductID = d.ProductID
+        LEFT JOIN Production.ProductSubcategory AS s ON s.ProductSubcategoryID = p.ProductSubcategoryID
+        GROUP BY COALESCE(s.Name, '(none)')
+        ORDER BY revenue DESC
+    """)
+    return
+
+
+@app.cell
+def _(ask_server):
+    ask_server("""
+        SELECT
+            (SELECT CAST(SUM(revenue) AS FLOAT) FROM (
+                SELECT COALESCE(s.Name, '(none)') AS subcategory, SUM(d.LineTotal) AS revenue
+                FROM Sales.SalesOrderDetail AS d
+                JOIN Production.Product AS p ON p.ProductID = d.ProductID
+                LEFT JOIN Production.ProductSubcategory AS s ON s.ProductSubcategoryID = p.ProductSubcategoryID
+                GROUP BY COALESCE(s.Name, '(none)')
+            ) AS x) AS sum_of_subcategories,
+            (SELECT CAST(SUM(LineTotal) AS FLOAT) FROM Sales.SalesOrderDetail) AS detail_alone
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Answer:** Road Bikes bring in the most revenue, 43,909,437.51, followed by Mountain Bikes (36,445,443.94) and Touring Bikes (14,296,291.26). The 35 subcategories add up to 109,846,381.40, the same as `SUM(LineTotal)` from `Sales.SalesOrderDetail` alone, so the joins didn't lose or repeat any sales.
     """)
     return
 
