@@ -230,14 +230,31 @@ def _(ask, towns_database):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ANSWER FOR A
+    ANSWER FOR A.1 & A.3
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The ask is still the same so it will count 351 towns as above, what changes between question 1 and A.1 is what the table result shows. In question 1, we can see the total count but it has a restriction: limit to 5 and it's ordered by the total population descending order which is why we get the top 5 results dislayed in the table. When removing this limit, the total is the same because it doesn't change but what changes is what gets displayed in our table. In our question removing the limit, now it jumps to 36 pages of results since it is showing ALL 351 towns ordered by descending population
+
+    For question 2, Nantucket’s share is 100% because Nantucket County has only one town, Nantucket, so the town’s population equals the county’s population.
     """)
     return
 
 
 @app.cell
-def _():
-    #the ask is still the same so it will count 351 towns as above, what changes between question 1 and A.1 is what the table result shows. In question 1, we can see the total count but it has a restriction: limit 5 which is why we are on,y getting the top 5 results displayed in the output, even though the actual count of towns matching the criteria is 351. When removing the limit, we get a table that shows all results in descending order which is why it now wen to 36 pages of reulst
+def _(ask, towns_database):
+    ask(towns_database, """
+        SELECT t.name, t.county, t.population, c.population AS county_population,
+        ROUND(CAST(t.population AS FLOAT) / c.population * 100, 2) AS share_of_county_population
+        FROM towns AS t
+        JOIN counties AS c ON t.county = c.name
+        ORDER BY share_of_county_population DESC
+        LIMIT 5
+    """)
     return
 
 
