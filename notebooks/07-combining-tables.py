@@ -216,6 +216,31 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask, towns_database):
+    ask(towns_database, """
+        SELECT t.name, t.county, t.population, c.population AS county_population
+        FROM towns AS t
+        JOIN counties AS c ON t.county = c.name
+        ORDER BY t.population DESC
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ANSWER FOR A
+    """)
+    return
+
+
+@app.cell
+def _():
+    #the ask is still the same so it will count 351 towns as above, what changes between question 1 and A.1 is what the table result shows. In question 1, we can see the total count but it has a restriction: limit 5 which is why we are on,y getting the top 5 results displayed in the output, even though the actual count of towns matching the criteria is 351. When removing the limit, we get a table that shows all results in descending order which is why it now wen to 36 pages of reulst
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -544,7 +569,6 @@ def _(mo):
 @app.cell
 def _():
     #Which customer placed the most expensive order?
-
     return
 
 
