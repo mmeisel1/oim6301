@@ -372,6 +372,51 @@ def _(ask, northwind_database):
     return
 
 
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT
+            (SELECT SUM(territories) FROM (
+                SELECT e.EmployeeID, COUNT(et.TerritoryID) AS territories
+                FROM employees AS e
+                LEFT JOIN employee_territories AS et ON e.EmployeeID = et.EmployeeID
+                GROUP BY e.EmployeeID
+            )) AS sum_of_counts,
+            (SELECT COUNT(*) FROM employee_territories) AS rows_in_employee_territories
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT
+            (SELECT SUM(territories) FROM (
+                SELECT e.EmployeeID, COUNT(et.TerritoryID) AS territories
+                FROM employees AS e
+                LEFT JOIN employee_territories AS et ON e.EmployeeID = et.EmployeeID
+                GROUP BY e.EmployeeID
+            )) AS sum_of_counts,
+            (SELECT COUNT(*) FROM employee_territories) AS rows_in_employee_territories
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+        SELECT t.TerritoryID, t.TerritoryDescription
+        FROM territories AS t
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM employee_territories AS et
+            WHERE et.TerritoryID = t.TerritoryID
+        )
+        ORDER BY t.TerritoryID
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
