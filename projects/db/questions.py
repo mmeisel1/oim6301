@@ -85,6 +85,32 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask):
+    ask("""
+        SELECT m.member_id,
+               m.first_name || ' ' || m.last_name AS member,
+               count(DISTINCT p.portfolio_id) AS portfolios,
+               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS total_bought
+        FROM members AS m
+        LEFT JOIN portfolios AS p ON p.member_id = m.member_id
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+           AND t.side = 'buy'
+        GROUP BY m.member_id, m.first_name, m.last_name
+        ORDER BY total_bought DESC
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    All 15 members are listed, and together they bought $758,705.24 across 19 portfolios. Sofia Garcia owns the most portfolios, 3, and bought the most, $133,914.76; Jack Murphy and Chloe Tanaka have no portfolio, so they show 0. I counted the value bought as quantity × price, without fees, because the club keeps the fee apart from a trade’s value.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -171,6 +197,23 @@ def _(mo):
     ## 3. Reading It Back
 
     **Prediction (Question 2):** I expect 335 rows from the joins members LEFT JOIN portfolios LEFT JOIN trades (buys only), before any grouping: one row for each of the 333 buys, plus one row each for members 14 and 15, who have no portfolio but are kept by the LEFT JOIN. I expect every portfolio to have at least one buy, so no portfolio adds an empty row.
+
+    After running it: Result: The joins alone give 335 rows, so my prediction matched. The 333 buys each became one row, members 14 and 15 (Jack Murphy and Chloe Tanaka) each kept one row because of the LEFT JOIN, and every one of the 19 portfolios had at least one buy, so no portfolio added an empty row.
+
+    One row of the final result is one member, with their number of portfolios and the total value of all the buys across them.
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT count(*) AS rows_before_grouping
+        FROM members AS m
+        LEFT JOIN portfolios AS p ON p.member_id = m.member_id
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+           AND t.side = 'buy'
     """)
     return
 
