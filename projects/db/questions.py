@@ -575,6 +575,70 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask, mo):
+    _portfolios = ask("SELECT portfolio_id, name FROM portfolios ORDER BY portfolio_id")
+    portfolio_picker = mo.ui.dropdown(
+        options={row["name"]: row["portfolio_id"] for row in _portfolios.iter_rows(named=True)},
+        value="Lucas's Portfolio 1",
+        label="Portfolio",
+    )
+    portfolio_picker_portfolios = ask("SELECT portfolio_id, name FROM portfolios ORDER BY portfolio_id")
+    portfolio_picker = mo.ui.dropdown(
+        options={row["name"]: row["portfolio_id"] for row in _portfolios.iter_rows(named=True)},
+        value="Lucas's Portfolio 1",
+        label="Portfolio",
+    )
+    portfolio_picker
+    return (portfolio_picker,)
+
+
+@app.cell
+def _(AS_OF, ask, portfolio_picker):
+    picked_holdings = ask(f"""
+        SELECT a.name AS asset,
+               CAST(sum(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) AS DOUBLE) AS units,
+               round(CAST(sum(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END)
+                          * pr.close_price AS DOUBLE), 2) AS value_on_as_of
+        FROM trades AS t
+        JOIN assets AS a ON a.asset_id = t.asset_id
+        JOIN prices AS pr
+            ON pr.asset_id = t.asset_id
+           AND pr.price_date = DATE '{AS_OF}'
+        WHERE t.portfolio_id = {portfolio_picker.value}
+          AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY a.name, pr.close_price
+        HAVING sum(CASE WHEN t.side = 'buy' THEN t.quantity ELSE -t.quantity END) > 0
+        ORDER BY value_on_as_of DESC
+    """)
+    picked_holdings
+    return (picked_holdings,)
+
+
+@app.cell
+def _(AS_OF, picked_holdings, portfolio_picker):
+    import altair as alt
+
+    alt.Chart(picked_holdings).mark_bar().encode(
+        x=alt.X("value_on_as_of:Q", title="Value on 2025-12-31 (USD)"),
+        y=alt.Y("asset:N", sort="-x", title="Asset"),
+    ).properties(
+        title=f"What {portfolio_picker.selected_key} holds on {AS_OF}",
+        width=520,
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    I added a dropdown of the 19 portfolios that changes what a query returns, and a bar chart of the result with both axes titled. Pick a portfolio and the notebook shows, without editing any code, what it holds on 2025-12-31 and what each holding is worth at that day's closing price, largest first. It combines the logic of Question 3 (units bought minus units sold) and Question 9 (units × the closing price on the as_of date).
+
+    What I found: Lucas's Portfolio 1, the most profitable, holds 9 assets worth \$47,219.12 in total, and a third of that is JPMorgan Chase (\$16,223.04). That total matches its value in Question 9, so the tool and Question 9 agree. Ava's Portfolio 1 also has JPMorgan Chase as its biggest holding (\$11,695.68), but spreads its \$32,989.35 over 10 assets, including all three crypto assets; its units are the same as the ones Question 3 lists for it.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
