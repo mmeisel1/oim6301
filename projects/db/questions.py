@@ -431,7 +431,60 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 9**:
+    **Question 9**:Which portfolio made the most profit by 2025-12-31, counting what it still holds at that day's closing prices?
+    """)
+    return
+
+
+@app.cell
+def _(AS_OF, ask):
+    ask(f"""
+        WITH cash AS (
+            SELECT portfolio_id,
+                   sum(CASE WHEN side = 'buy'  THEN quantity * price + fee ELSE 0 END) AS spent,
+                   sum(CASE WHEN side = 'sell' THEN quantity * price - fee ELSE 0 END) AS received
+            FROM trades
+            WHERE trade_date <= DATE '{AS_OF}'
+            GROUP BY portfolio_id
+        ),
+        holdings AS (
+            SELECT portfolio_id, asset_id,
+                   sum(CASE WHEN side = 'buy' THEN quantity ELSE -quantity END) AS units
+            FROM trades
+            WHERE trade_date <= DATE '{AS_OF}'
+            GROUP BY portfolio_id, asset_id
+        ),
+        worth AS (
+            SELECT h.portfolio_id,
+                   sum(h.units * pr.close_price) AS market_value
+            FROM holdings AS h
+            JOIN prices AS pr
+                ON pr.asset_id = h.asset_id
+               AND pr.price_date = DATE '{AS_OF}'
+            WHERE h.units > 0
+            GROUP BY h.portfolio_id
+        )
+        SELECT p.portfolio_id,
+               p.name AS portfolio,
+               m.first_name || ' ' || m.last_name AS owner,
+               round(CAST(c.spent AS DOUBLE), 2)                       AS spent_on_buys,
+               round(CAST(c.received AS DOUBLE), 2)                    AS received_from_sells,
+               round(CAST(coalesce(w.market_value, 0) AS DOUBLE), 2)   AS worth_on_as_of,
+               round(CAST(coalesce(w.market_value, 0) + c.received - c.spent AS DOUBLE), 2) AS profit,
+               round(CAST(100.0 * (coalesce(w.market_value, 0) + c.received - c.spent) / c.spent AS DOUBLE), 1) AS return_pct
+        FROM portfolios AS p
+        JOIN members AS m ON m.member_id = p.member_id
+        JOIN cash    AS c ON c.portfolio_id = p.portfolio_id
+        LEFT JOIN worth AS w ON w.portfolio_id = p.portfolio_id
+        ORDER BY profit DESC
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Lucas's Portfolio 1 made the most profit by 2025-12-31, \$5,083.46 (a 12.0% return on \$42,285.71 spent). I counted profit as the value of what each portfolio still holds at the 2025-12-31 closing prices, plus money received from sells, minus money spent on buys, with fees included. Liam's Portfolio 1 was the second most profitable (\$4,735.71), but it looks better than it is, because it includes trade 391, which sold 10 Exxon Mobil units it did not hold.
     """)
     return
 
