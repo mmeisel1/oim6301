@@ -214,6 +214,34 @@ def _(mo):
     return
 
 
+@app.cell
+def _(AS_OF, ask):
+    ask(f"""
+        SELECT a.asset_id,
+               a.name AS asset,
+               tk.ticker,
+               a.asset_type,
+               a.sector
+        FROM assets AS a
+        LEFT JOIN trades AS t ON t.asset_id = a.asset_id
+        LEFT JOIN asset_tickers AS tk
+            ON tk.asset_id = a.asset_id
+           AND tk.valid_from <= DATE '{AS_OF}'
+           AND (tk.valid_to IS NULL OR tk.valid_to >= DATE '{AS_OF}')
+        WHERE t.trade_id IS NULL
+        ORDER BY a.asset_id
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Only one of the assets the club follows has never been traded by any portfolio: the Vanguard Total Bond ETF (BND). Every other asset has at least one trade.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
