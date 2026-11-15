@@ -362,6 +362,72 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask):
+    ask("""
+        WITH sells AS (
+            SELECT s.trade_id,
+                   s.quantity AS sold,
+                   coalesce(sum(CASE WHEN e.side = 'buy' THEN e.quantity
+                                     ELSE -e.quantity END), 0) AS held_before
+            FROM trades AS s
+            LEFT JOIN trades AS e
+                ON e.portfolio_id = s.portfolio_id
+               AND e.asset_id     = s.asset_id
+               AND e.trade_date   < s.trade_date
+            WHERE s.side = 'sell'
+            GROUP BY s.trade_id, s.quantity
+        )
+        SELECT count(*) AS sells_checked,
+               sum(CASE WHEN sold > held_before THEN 1 ELSE 0 END) AS breaking_the_rule
+        FROM sells
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        WITH sells AS (
+            SELECT s.trade_id,
+                   s.trade_date,
+                   s.portfolio_id,
+                   s.asset_id,
+                   s.quantity AS sold,
+                   coalesce(sum(CASE WHEN e.side = 'buy' THEN e.quantity
+                                     ELSE -e.quantity END), 0) AS held_before
+            FROM trades AS s
+            LEFT JOIN trades AS e
+                ON e.portfolio_id = s.portfolio_id
+               AND e.asset_id     = s.asset_id
+               AND e.trade_date   < s.trade_date
+            WHERE s.side = 'sell'
+            GROUP BY s.trade_id, s.trade_date, s.portfolio_id, s.asset_id, s.quantity
+        )
+        SELECT x.trade_id,
+               x.trade_date,
+               p.name AS portfolio,
+               a.name AS asset,
+               CAST(x.held_before AS DOUBLE) AS held_before,
+               CAST(x.sold AS DOUBLE)        AS sold,
+               CAST(x.sold - x.held_before AS DOUBLE) AS oversold_by
+        FROM sells AS x
+        JOIN portfolios AS p ON p.portfolio_id = x.portfolio_id
+        JOIN assets     AS a ON a.asset_id     = x.asset_id
+        WHERE x.sold > x.held_before
+        ORDER BY x.trade_id
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    I checked all 59 sells against what the portfolio held just before each one: 57 follow the rule and 2 break it. Trade 391 (Liam’s Portfolio 1 selling 19 Exxon Mobil on 2025-12-30 while holding 9) and trade 392 (Sofia’s Portfolio 2 selling 10 Johnson & Johnson on 2025-12-29 while holding none) each oversold by 10 units; these are the two rows I broke on purpose in Part A. I counted the holding from all earlier trades of that asset in that portfolio
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
