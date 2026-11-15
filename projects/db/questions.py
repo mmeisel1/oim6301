@@ -492,7 +492,34 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 10**:
+    **Question 10**: Which assets are the most popular with members: how many different members have bought each one, and how much money went into it?
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT a.name AS asset,
+               a.asset_type,
+               count(DISTINCT p.member_id)    AS members,
+               count(DISTINCT t.portfolio_id) AS portfolios,
+               count(*)                       AS buys,
+               round(CAST(sum(t.quantity * t.price) AS DOUBLE), 2) AS money_invested
+        FROM trades AS t
+        JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
+        JOIN assets     AS a ON a.asset_id     = t.asset_id
+        WHERE t.side = 'buy'
+        GROUP BY a.name, a.asset_type
+        ORDER BY members DESC, money_invested DESC
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Three assets were bought by every one of the 13 members who have a portfolio: Solana, Ethereum and Johnson & Johnson. Crypto in general was very popular: Solana and Ethereum are first and second in the table, Ethereum is in the most portfolios (18) and has the most buys (34), and Solana has 32 buys, as many as JPMorgan Chase. But popular is not the same as the most money: students put \$102,073.10 into Solana and Ethereum together (\$53,122.10 and \$48,951.00), less than the \$121,910.02 that went into JPMorgan Chase alone, followed by the Invesco QQQ ETF with \$108,401.71. So crypto was bought often but in smaller amounts. I counted popularity as the number of different members who bought an asset, and money invested as quantity × price of the buys, without fees.
     """)
     return
 
