@@ -308,6 +308,52 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask):
+    ask("""
+        SELECT count(*) AS trades_checked,
+               count(pr.price_date) AS with_closing_price,
+               count(*) - count(pr.price_date) AS breaking_the_rule
+        FROM trades AS t
+        LEFT JOIN prices AS pr
+            ON pr.asset_id   = t.asset_id
+           AND pr.price_date = t.trade_date
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT t.trade_id,
+               t.trade_date,
+               dayname(t.trade_date) AS weekday,
+               p.name AS portfolio,
+               a.name AS asset,
+               a.asset_type,
+               t.side,
+               t.quantity,
+               CAST(t.price AS DOUBLE) AS price
+        FROM trades AS t
+        JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
+        JOIN assets     AS a ON a.asset_id     = t.asset_id
+        LEFT JOIN prices AS pr
+            ON pr.asset_id   = t.asset_id
+           AND pr.price_date = t.trade_date
+        WHERE pr.price_date IS NULL
+        ORDER BY t.trade_id
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    I checked all 392 trades against the closing prices: 390 happen on a day their asset has a closing price, and 2 break the rule. They are trade 389 (Ava’s Portfolio 1 buying 5 Apple on Saturday 2025-03-15) and trade 390 (Ava’s Portfolio 2 buying 3 Microsoft on Saturday 2025-08-09), the two rows I broke on purpose in Part A; stocks have no closing price on a Saturday.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
