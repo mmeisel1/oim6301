@@ -250,6 +250,56 @@ def _(mo):
     return
 
 
+@app.cell
+def _(AS_OF, ask):
+    ask(f"""
+        SELECT a.name AS asset,
+               tk.ticker,
+               tk.valid_from,
+               tk.valid_to,
+               count(t.trade_id) AS trades,
+               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS value_traded
+        FROM (SELECT asset_id FROM asset_tickers
+              GROUP BY asset_id HAVING count(*) > 1) AS changed
+        JOIN assets AS a         ON a.asset_id  = changed.asset_id
+        JOIN asset_tickers AS tk ON tk.asset_id = a.asset_id
+        LEFT JOIN trades AS t
+            ON t.asset_id = a.asset_id
+           AND t.trade_date >= tk.valid_from
+           AND (tk.valid_to IS NULL OR t.trade_date <= tk.valid_to)
+           AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
+           AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY a.name, tk.ticker, tk.valid_from, tk.valid_to
+        ORDER BY tk.valid_from
+    """)
+    return
+
+
+@app.cell
+def _(AS_OF, ask):
+    ask(f"""
+        SELECT a.name AS asset,
+               count(*) AS trades,
+               round(CAST(sum(t.quantity * t.price) AS DOUBLE), 2) AS value_traded
+        FROM trades AS t
+        JOIN assets AS a ON a.asset_id = t.asset_id
+        WHERE t.asset_id IN (SELECT asset_id FROM asset_tickers
+                             GROUP BY asset_id HAVING count(*) > 1)
+          AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
+          AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY a.name
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The asset that changed its ticker is Block: it traded as SQ until 2025-01-20 and as XYZ from 2025-01-21. Over the year ending 2025-12-31, the portfolios traded $22,765.91 of Block in 24 trades: $1,960.71 in 2 trades under SQ and $20,805.20 in 22 trades under XYZ. I counted the value traded as quantity × price for buys and sells together, without fees.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
