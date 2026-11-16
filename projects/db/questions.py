@@ -778,8 +778,11 @@ def _(mo):
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    I've spent about 10-12 hours in the Database Project if we include both Part A and B
+    """)
     return
 
 
