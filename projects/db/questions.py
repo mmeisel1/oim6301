@@ -111,6 +111,43 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    #checking my answer
+    return
+
+
+@app.cell
+def _(ask, mo):
+    _alone = ask("""
+        SELECT round(CAST(sum(quantity * price) AS DOUBLE), 2) AS bought,
+               (SELECT count(*) FROM portfolios) AS portfolios
+        FROM trades
+        WHERE side = 'buy'
+    """)
+    _q2 = ask("""
+        SELECT m.member_id,
+               count(DISTINCT p.portfolio_id) AS portfolios,
+               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS total_bought
+        FROM members AS m
+        LEFT JOIN portfolios AS p ON p.member_id = m.member_id
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+           AND t.side = 'buy'
+        GROUP BY m.member_id
+    """)
+    _answer_bought     = round(float(_q2["total_bought"].sum()), 2)
+    _answer_portfolios = int(_q2["portfolios"].sum())
+    _alone_bought      = float(_alone["bought"][0])
+    _alone_portfolios  = int(_alone["portfolios"][0])
+
+    assert _answer_portfolios == _alone_portfolios and abs(_answer_bought - _alone_bought) < 0.1, \
+        f"Question 2 does not add up: {_answer_portfolios} vs {_alone_portfolios} portfolios, {_answer_bought} vs {_alone_bought}"
+
+    mo.md(f"**Check 2, Question 2:** the 15 member rows add up to {_answer_portfolios} portfolios and {_answer_bought:,.2f} bought; `portfolios` and `trades` alone give {_alone_portfolios} portfolios and {_alone_bought:,.2f}. They agree.")
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -297,6 +334,76 @@ def _(mo):
     mo.md(r"""
     The asset that changed its ticker is Block: it traded as SQ until 2025-01-20 and as XYZ from 2025-01-21. Over the year ending 2025-12-31, the portfolios traded $22,765.91 of Block in 24 trades: $1,960.71 in 2 trades under SQ and $20,805.20 in 22 trades under XYZ. I counted the value traded as quantity × price for buys and sells together, without fees.
     """)
+    return
+
+
+@app.cell
+def _():
+    #checking my answers
+    return
+
+
+@app.cell
+def _(AS_OF, ask):
+    q6_by_ticker = ask(f"""
+        SELECT a.name AS asset,
+               tk.ticker,
+               tk.valid_from,
+               tk.valid_to,
+               count(t.trade_id) AS trades,
+               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS value_traded
+        FROM (SELECT asset_id FROM asset_tickers
+              GROUP BY asset_id HAVING count(*) > 1) AS changed
+        JOIN assets AS a         ON a.asset_id  = changed.asset_id
+        JOIN asset_tickers AS tk ON tk.asset_id = a.asset_id
+        LEFT JOIN trades AS t
+            ON t.asset_id = a.asset_id
+           AND t.trade_date >= tk.valid_from
+           AND (tk.valid_to IS NULL OR t.trade_date <= tk.valid_to)
+           AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
+           AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY a.name, tk.ticker, tk.valid_from, tk.valid_to
+        ORDER BY tk.valid_from
+    """)
+    q6_by_ticker
+    return (q6_by_ticker,)
+
+
+@app.cell
+def _(AS_OF, ask):
+    q6_total = ask(f"""
+        SELECT a.name AS asset,
+               count(t.trade_id) AS trades,
+               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS value_traded
+        FROM assets AS a
+        JOIN trades AS t ON t.asset_id = a.asset_id
+        WHERE a.asset_id IN (SELECT asset_id FROM asset_tickers
+                             GROUP BY asset_id HAVING count(*) > 1)
+          AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
+          AND t.trade_date <= DATE '{AS_OF}'
+        GROUP BY a.name
+    """)
+    q6_total
+    return (q6_total,)
+
+
+@app.cell
+def _(mo, q6_by_ticker, q6_total):
+    _parts_trades = int(q6_by_ticker["trades"].sum())
+    _total_trades = int(q6_total["trades"][0])
+    _parts_value  = round(float(q6_by_ticker["value_traded"].sum()), 2)
+    _total_value  = float(q6_total["value_traded"][0])
+
+    assert _parts_trades == _total_trades and abs(_parts_value - _total_value) < 0.01, \
+        f"Question 6 does not add up: {_parts_trades} vs {_total_trades} trades, {_parts_value} vs {_total_value}"
+
+    mo.md(f"**Check 1, Question 6:** SQ + XYZ = {_parts_trades} trades and {_parts_value:,.2f} traded; Block's total from `trades` alone = {_total_trades} trades and {_total_value:,.2f}. They agree.")
+    return
+
+
+@app.cell
+def _():
+    # AssertionError: Question 6 does not add up: 46 vs 24 trades, 43571.11 vs 22765.91 (this was changed)
     return
 
 
@@ -535,7 +642,31 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    I reached two answers a second way, in code, and each check stops with an error if the two numbers disagree.
+
+    **Check 1, Question 6**: the two ticker rows (SQ and XYZ) add up to the same number of trades and the same value as Block's total computed from `trades` alone. The check reads the Question 6 cells' own results, so it fails if either query changes. To test it, I removed the valid_to condition from Question 6: trades then matched both tickers, and the check stopped with "AssertionError: Question 6 does not add up: 46 vs 24 trades, 43571.11 vs 22765.91". After I put the condition back, the check agreed again.
+
+    **Check 2, Question 2**: the 15 member rows add up to 19 portfolios and 758,705.24 bought; counting the `portfolios` table and summing the buys in `trades` alone gives 19 portfolios and 758,705.25. The one-cent difference comes from rounding each member's total to cents before adding them, which is why the check allows a difference below 0.10.
+
+    **Additional Check (Business Questions)**: I also asked marimo's AI agent to review all ten queries against their written answers; it found no errors, but I rely on these checks, because they run in the notebook.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 2. Working With the Agent
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    For Question 9, my agent drafted the answer sentence with dollar amounts written as $5,083.46, $42,285.71 and $4,735.71. **What I changed:** I put a backslash before every dollar sign (\$5,083.46), so marimo shows them as plain text. I did the same in my other answers with dollar amounts.
+
+    **How I knew:** When I pasted the sentence into a markdown cell, most of it came out as squashed italic text with the spaces removed. marimo reads text between two $ signs as a math formula, so everything between the first and the last amount was turned into math. After the change, the cell displayed normally. See the answer cell under Question 9.
     """)
     return
 
