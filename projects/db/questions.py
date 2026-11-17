@@ -24,12 +24,6 @@ def _(duckdb, mo):
     return AS_OF, ask
 
 
-@app.cell
-def _(ask):
-    ask("SELECT side, count(*) AS trades FROM trades GROUP BY side")
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -43,7 +37,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 1**: For each portfolio over the last 30 days: the number of trades, the money spent on buys with fees added, and the money received from sells with fees taken off.
+    ## Question 1 · How active was each portfolio in the last 30 days, and how much money went in and out?
     """)
     return
 
@@ -72,7 +66,7 @@ def _(AS_OF, ask):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    In the 30 days ending 2025-12-31, the 19 portfolios made 46 trades, spending $87,251.51 on buys (fees added) and receiving $11,594.59 from sells (fees taken off). Liam’s Portfolio 1 was the most active, with 5 trades, and Leo’s Portfolio 1 spent the most, $16,800.18. I read “each portfolio” as all 19, so the two with no trades in that window, Ava’s Portfolio 2 and Harper’s Portfolio 1, are listed with 0.
+    In the 30 days ending 2025-12-31, the 19 portfolios made 46 trades, spending \$87,251.51 on buys (fees added) and receiving \$11,594.59 from sells (fees taken off). Liam’s Portfolio 1 was the most active, with 5 trades, and Leo’s Portfolio 1 spent the most, \$16,800.18. I read “each portfolio” as all 19, so the two with no trades in that window, Ava’s Portfolio 2 and Harper’s Portfolio 1, are listed with 0.
     """)
     return
 
@@ -80,7 +74,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 2**: One row for each member, members with no portfolio included: their number of portfolios and the total value they bought across them. (three tables or more)
+    ## Question 2 · For every member, including those without a portfolio, how many portfolios do they have and how much have they bought in total?
     """)
     return
 
@@ -106,14 +100,8 @@ def _(ask):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    All 15 members are listed, and together they bought $758,705.24 across 19 portfolios. Sofia Garcia owns the most portfolios, 3, and bought the most, $133,914.76; Jack Murphy and Chloe Tanaka have no portfolio, so they show 0. I counted the value bought as quantity × price, without fees, because the club keeps the fee apart from a trade’s value.
+    All 15 members are listed, and together they bought \$758,705.24 across 19 portfolios. Sofia Garcia owns the most portfolios, 3, and bought the most, \$133,914.76; Jack Murphy and Chloe Tanaka have no portfolio, so they show 0. I counted the value bought as quantity × price, without fees, because the club keeps the fee apart from a trade’s value.
     """)
-    return
-
-
-@app.cell
-def _():
-    #checking my answer
     return
 
 
@@ -151,7 +139,7 @@ def _(ask, mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 3**: What each portfolio holds on your as_of date: for each asset, the units bought minus the units sold, keeping only those above zero. (three tables or more)
+    ## Question 3 · What does each portfolio hold on 2025-12-31, and how many units of each asset?
     """)
     return
 
@@ -163,19 +151,14 @@ def _(AS_OF, ask):
                p.name AS portfolio,
                a.name AS asset,
                tk.ticker,
-               CAST(sum(CASE WHEN t.side = 'buy' THEN t.quantity
-                             ELSE -t.quantity END) AS DOUBLE) AS units_held
-        FROM trades AS t
-        JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
-        JOIN assets     AS a ON a.asset_id     = t.asset_id
+               CAST(h.units AS DOUBLE) AS units_held
+        FROM current_holdings AS h
+        JOIN portfolios AS p ON p.portfolio_id = h.portfolio_id
+        JOIN assets     AS a ON a.asset_id     = h.asset_id
         LEFT JOIN asset_tickers AS tk
             ON tk.asset_id = a.asset_id
            AND tk.valid_from <= DATE '{AS_OF}'
            AND (tk.valid_to IS NULL OR tk.valid_to >= DATE '{AS_OF}')
-        WHERE t.trade_date <= DATE '{AS_OF}'
-        GROUP BY p.portfolio_id, p.name, a.name, tk.ticker
-        HAVING sum(CASE WHEN t.side = 'buy' THEN t.quantity
-                        ELSE -t.quantity END) > 0
         ORDER BY p.portfolio_id, asset
     """)
     return
@@ -184,7 +167,7 @@ def _(AS_OF, ask):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    On 2025-12-31, the 19 portfolios hold 188 positions across 13 assets; for example, Ava’s Portfolio 1 holds 31 shares of JPMorgan Chase, 21 of Microsoft and 0.075 Bitcoin. I measured each holding in units (bought minus sold) rather than in dollars, show each asset under the ticker it used on that date (so Block appears as XYZ), and left out positions that were fully sold.
+    On 2025-12-31, the 19 portfolios hold 188 positions across 13 assets; for example, Ava’s Portfolio 1 holds 31 shares of JPMorgan Chase, 21 of Microsoft and 0.075 Bitcoin. I measured each holding in units (bought minus sold) rather than in dollars, show each asset under the ticker it used on that date (so Block appears as XYZ), and left out positions that were fully sold. The query reads the view `current_holdings` that `build.py` saves, which keeps only holdings above zero.
     """)
     return
 
@@ -192,7 +175,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 4**: For every trade in the last 90 days, the closing price on the trade date, and how far the trade price was from it, as a percent of the closing price. (three tables or more)
+    ## Question 4 · For each trade in the last 90 days, what was the closing price that day, and how far was the trade price from it?
     """)
     return
 
@@ -246,7 +229,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 5**: The assets the club follows that no portfolio has ever traded.
+    ## Question 5 · Which assets does the club follow that no portfolio has ever traded?
     """)
     return
 
@@ -282,64 +265,8 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 6**: The asset that changed its ticker: its value traded over the year, under both tickers together.
+    ## Question 6 · How much of the asset that changed its ticker was traded over the year, under its old and new ticker together?
     """)
-    return
-
-
-@app.cell
-def _(AS_OF, ask):
-    ask(f"""
-        SELECT a.name AS asset,
-               tk.ticker,
-               tk.valid_from,
-               tk.valid_to,
-               count(t.trade_id) AS trades,
-               round(CAST(coalesce(sum(t.quantity * t.price), 0) AS DOUBLE), 2) AS value_traded
-        FROM (SELECT asset_id FROM asset_tickers
-              GROUP BY asset_id HAVING count(*) > 1) AS changed
-        JOIN assets AS a         ON a.asset_id  = changed.asset_id
-        JOIN asset_tickers AS tk ON tk.asset_id = a.asset_id
-        LEFT JOIN trades AS t
-            ON t.asset_id = a.asset_id
-           AND t.trade_date >= tk.valid_from
-           AND (tk.valid_to IS NULL OR t.trade_date <= tk.valid_to)
-           AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
-           AND t.trade_date <= DATE '{AS_OF}'
-        GROUP BY a.name, tk.ticker, tk.valid_from, tk.valid_to
-        ORDER BY tk.valid_from
-    """)
-    return
-
-
-@app.cell
-def _(AS_OF, ask):
-    ask(f"""
-        SELECT a.name AS asset,
-               count(*) AS trades,
-               round(CAST(sum(t.quantity * t.price) AS DOUBLE), 2) AS value_traded
-        FROM trades AS t
-        JOIN assets AS a ON a.asset_id = t.asset_id
-        WHERE t.asset_id IN (SELECT asset_id FROM asset_tickers
-                             GROUP BY asset_id HAVING count(*) > 1)
-          AND t.trade_date >  DATE '{AS_OF}' - INTERVAL 1 YEAR
-          AND t.trade_date <= DATE '{AS_OF}'
-        GROUP BY a.name
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    The asset that changed its ticker is Block: it traded as SQ until 2025-01-20 and as XYZ from 2025-01-21. Over the year ending 2025-12-31, the portfolios traded $22,765.91 of Block in 24 trades: $1,960.71 in 2 trades under SQ and $20,805.20 in 22 trades under XYZ. I counted the value traded as quantity × price for buys and sells together, without fees.
-    """)
-    return
-
-
-@app.cell
-def _():
-    #checking my answers
     return
 
 
@@ -387,6 +314,14 @@ def _(AS_OF, ask):
     return (q6_total,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The asset that changed its ticker is Block: it traded as SQ until 2025-01-20 and as XYZ from 2025-01-21. Over the year ending 2025-12-31, the portfolios traded \$22,765.91 of Block in 24 trades: \$1,960.71 in 2 trades under SQ and \$20,805.20 in 22 trades under XYZ. I counted the value traded as quantity × price for buys and sells together, without fees.
+    """)
+    return
+
+
 @app.cell
 def _(mo, q6_by_ticker, q6_total):
     _parts_trades = int(q6_by_ticker["trades"].sum())
@@ -401,16 +336,10 @@ def _(mo, q6_by_ticker, q6_total):
     return
 
 
-@app.cell
-def _():
-    # AssertionError: Question 6 does not add up: 46 vs 24 trades, 43571.11 vs 22765.91 (this was changed)
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 7**: Every trade checked against the rule that it happens on a day its asset has a closing price, and a list of any that break it. (checks a rule)
+    ## Question 7 · Does every trade happen on a day its asset has a closing price, and which trades break that rule?
     """)
     return
 
@@ -464,7 +393,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 8**: Every sell checked against the rule that a portfolio never sells more than it holds, and a list of any that break it. (checks a rule)
+    ## Question 8 · Does any portfolio ever sell more units of an asset than it holds at the time, and which sells do?
     """)
     return
 
@@ -530,7 +459,7 @@ def _(ask):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    I checked all 59 sells against what the portfolio held just before each one: 57 follow the rule and 2 break it. Trade 391 (Liam’s Portfolio 1 selling 19 Exxon Mobil on 2025-12-30 while holding 9) and trade 392 (Sofia’s Portfolio 2 selling 10 Johnson & Johnson on 2025-12-29 while holding none) each oversold by 10 units; these are the two rows I broke on purpose in Part A. I counted the holding from all earlier trades of that asset in that portfolio
+    I checked all 59 sells against what the portfolio held just before each one: 57 follow the rule and 2 break it. Trade 391 (Liam’s Portfolio 1 selling 19 Exxon Mobil on 2025-12-30 while holding 9) and trade 392 (Sofia’s Portfolio 2 selling 10 Johnson & Johnson on 2025-12-29 while holding none) each oversold by 10 units; these are the two rows I broke on purpose in Part A. I counted the holding from all earlier trades of that asset in that portfolio.
     """)
     return
 
@@ -538,7 +467,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 9**:Which portfolio made the most profit by 2025-12-31, counting what it still holds at that day's closing prices?
+    ## Question 9 · Which portfolio made the most profit by 2025-12-31, counting what it still holds at that day's closing prices?
     """)
     return
 
@@ -599,7 +528,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **Question 10**: Which assets are the most popular with members: how many different members have bought each one, and how much money went into it?
+    ## Question 10 · Which assets are the most popular with members: how many different members have bought each one, and how much money went into it?
     """)
     return
 
@@ -642,13 +571,13 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    I reached two answers a second way, in code, and each check stops with an error if the two numbers disagree.
+    I reached two answers a second way, in code, and each check stops with an error if the two numbers disagree. The check cells sit right under the answers they check: check 1 under Question 6, check 2 under Question 2.
 
     **Check 1, Question 6**: the two ticker rows (SQ and XYZ) add up to the same number of trades and the same value as Block's total computed from `trades` alone. The check reads the Question 6 cells' own results, so it fails if either query changes. To test it, I removed the valid_to condition from Question 6: trades then matched both tickers, and the check stopped with "AssertionError: Question 6 does not add up: 46 vs 24 trades, 43571.11 vs 22765.91". After I put the condition back, the check agreed again.
 
     **Check 2, Question 2**: the 15 member rows add up to 19 portfolios and 758,705.24 bought; counting the `portfolios` table and summing the buys in `trades` alone gives 19 portfolios and 758,705.25. The one-cent difference comes from rounding each member's total to cents before adding them, which is why the check allows a difference below 0.10.
 
-    **Additional Check (Business Questions)**: I also asked marimo's AI agent to review all ten queries against their written answers; it found no errors, but I rely on these checks, because they run in the notebook.
+    **Additional check:** I also asked marimo's AI agent to review all ten queries against their written answers; it found no errors, but I rely on these checks, because they run in the notebook.
     """)
     return
 
@@ -664,9 +593,11 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    For Question 9, my agent drafted the answer sentence with dollar amounts written as $5,083.46, $42,285.71 and $4,735.71. **What I changed:** I put a backslash before every dollar sign (\$5,083.46), so marimo shows them as plain text. I did the same in my other answers with dollar amounts.
+    **What the AI gave me:** For Question 9, my agent drafted the answer sentence with dollar amounts written as `$5,083.46`, `$42,285.71` and `$4,735.71`.
 
-    **How I knew:** When I pasted the sentence into a markdown cell, most of it came out as squashed italic text with the spaces removed. marimo reads text between two $ signs as a math formula, so everything between the first and the last amount was turned into math. After the change, the cell displayed normally. See the answer cell under Question 9.
+    **What I changed:** I put a backslash before every dollar sign (`\$5,083.46`), so marimo shows them as plain text. I did the same in my other answers with dollar amounts.
+
+    **How I knew:** When I pasted the sentence into a markdown cell, most of it came out as squashed italic text with the spaces removed. marimo reads text between two $ signs as a math formula, so everything between two amounts was turned into math. After the change, the cell displayed normally. See the answer cell under Question 9.
     """)
     return
 
@@ -678,9 +609,7 @@ def _(mo):
 
     **Prediction (Question 2):** I expect 335 rows from the joins members LEFT JOIN portfolios LEFT JOIN trades (buys only), before any grouping: one row for each of the 333 buys, plus one row each for members 14 and 15, who have no portfolio but are kept by the LEFT JOIN. I expect every portfolio to have at least one buy, so no portfolio adds an empty row.
 
-    After running it: Result: The joins alone give 335 rows, so my prediction matched. The 333 buys each became one row, members 14 and 15 (Jack Murphy and Chloe Tanaka) each kept one row because of the LEFT JOIN, and every one of the 19 portfolios had at least one buy, so no portfolio added an empty row.
-
-    One row of the final result is one member, with their number of portfolios and the total value of all the buys across them.
+    The cell below runs the joins alone, without any grouping, and counts the rows.
     """)
     return
 
@@ -701,6 +630,16 @@ def _(ask):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    **Result:** The joins alone give 335 rows, so my prediction matched. The 333 buys each became one row, members 14 and 15 (Jack Murphy and Chloe Tanaka) each kept one row because of the LEFT JOIN, and every one of the 19 portfolios had at least one buy, so no portfolio added an empty row.
+
+    One row of the final result is one member, with their number of portfolios and the total value of all the buys across them.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 4. Going Further
     """)
     return
@@ -709,12 +648,6 @@ def _(mo):
 @app.cell
 def _(ask, mo):
     _portfolios = ask("SELECT portfolio_id, name FROM portfolios ORDER BY portfolio_id")
-    portfolio_picker = mo.ui.dropdown(
-        options={row["name"]: row["portfolio_id"] for row in _portfolios.iter_rows(named=True)},
-        value="Lucas's Portfolio 1",
-        label="Portfolio",
-    )
-    portfolio_picker_portfolios = ask("SELECT portfolio_id, name FROM portfolios ORDER BY portfolio_id")
     portfolio_picker = mo.ui.dropdown(
         options={row["name"]: row["portfolio_id"] for row in _portfolios.iter_rows(named=True)},
         value="Lucas's Portfolio 1",
@@ -766,6 +699,8 @@ def _(mo):
     I added a dropdown of the 19 portfolios that changes what a query returns, and a bar chart of the result with both axes titled. Pick a portfolio and the notebook shows, without editing any code, what it holds on 2025-12-31 and what each holding is worth at that day's closing price, largest first. It combines the logic of Question 3 (units bought minus units sold) and Question 9 (units × the closing price on the as_of date).
 
     What I found: Lucas's Portfolio 1, the most profitable, holds 9 assets worth \$47,219.12 in total, and a third of that is JPMorgan Chase (\$16,223.04). That total matches its value in Question 9, so the tool and Question 9 agree. Ava's Portfolio 1 also has JPMorgan Chase as its biggest holding (\$11,695.68), but spreads its \$32,989.35 over 10 assets, including all three crypto assets; its units are the same as the ones Question 3 lists for it.
+
+    The dropdown, the table and the chart are the three cells right under the section 4 heading.
     """)
     return
 
@@ -781,7 +716,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    I've spent about 10-12 hours in the Database Project if we include both Part A and B
+    About 11 hours, for Part A and Part B together.
     """)
     return
 

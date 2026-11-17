@@ -78,6 +78,6 @@ erDiagram
 
 **3. Rules my tables cannot hold.** "A portfolio never sells more than it holds" needs to add up earlier trades, which a CHECK cannot do, so I check it with a query in question 8. "A trade happens on a day its asset has a closing price" is also checked with a query, in question 7, so that the two broken rows for that question can load.
 
-**4. An agent proposal I changed.** My agent first charted Bitcoin in "A Look at the Data". I changed it to NVIDIA because I wanted to look at an AI tech company.
+**4. An agent proposal I changed.** My agent first charted Bitcoin in "A Look at the Data". I changed it to NVIDIA because I wanted to look at an AI tech company. Additionally, my agent’s first CREATE TABLE for trades had a foreign key from (asset_id, trade_date) to prices, so the database would refuse any trade on a day without a closing price (commit df3f005). I removed it (commit 29319da), because then the two rows I had to break on purpose for question 7 could not load; I check that rule with a query in question 7 instead.
 
 Note: sections 1–3 were committed in `be252ee` ("What one row of each table means (completed)"), before `build.py` was added. That is my "db: add the question and the plan" commit.
